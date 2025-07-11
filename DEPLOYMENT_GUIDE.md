@@ -6,7 +6,7 @@
 
 1. **Go to Cloud Run Console**
    - Visit: https://console.cloud.google.com/run
-   - Make sure you're in project: `alert-brook-272309`
+   - Make sure you're in project: `global-voice-connect`
 
 2. **Click "Create Service"**
 
@@ -40,7 +40,7 @@
    Add these if you have them (optional for demo):
    - `PINECONE_API_KEY`: Your Pinecone API key
    - `PINECONE_INDEX_NAME`: Your Pinecone index
-   - `GEMINI_PROJECT_ID`: alert-brook-272309
+   - `GEMINI_PROJECT_ID`: global-voice-connect
    - `GEMINI_LOCATION`: us-central1
 
 9. **Click "Create"**

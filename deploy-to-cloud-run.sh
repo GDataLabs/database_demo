@@ -2,7 +2,7 @@
 
 # Deploy GABTA Database to Google Cloud Run
 
-PROJECT_ID="alert-brook-272309"  # Google Cloud project ID
+PROJECT_ID="global-voice-connect"  # Google Cloud project ID
 SERVICE_NAME="gabta-database-demo"
 REGION="us-central1"
 
@@ -46,8 +46,8 @@ gcloud run deploy $SERVICE_NAME \
     --set-env-vars="PINECONE_API_KEY=${PINECONE_API_KEY}" \
     --set-env-vars="PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME}" \
     --set-env-vars="PINECONE_NAMESPACE=${PINECONE_NAMESPACE}" \
-    --set-env-vars="GEMINI_PROJECT_ID=${GEMINI_PROJECT_ID}" \
-    --set-env-vars="GEMINI_LOCATION=${GEMINI_LOCATION}"
+    --set-env-vars="GEMINI_PROJECT_ID=global-voice-connect" \
+    --set-env-vars="GEMINI_LOCATION=us-central1"
 
 # Get the service URL
 SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --format 'value(status.url)')
