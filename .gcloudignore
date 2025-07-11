@@ -1,0 +1,32 @@
+# This file specifies files that are *not* uploaded to Google Cloud
+# using gcloud. It follows the same syntax as .gitignore, with the addition of
+# "#!include" directives (which insert the entries of the given .gitignore-style
+# file at that point).
+
+.gcloudignore
+.git
+.gitignore
+
+# Node.js dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+
+# Backup files
+backups/
+*.backup
+*_backup*
+
+# Local database files
+*.db
+*.sqlite
+data/
+
+# Service account (should be set via env vars in Cloud Run)
+service_account.json
+
+# Development files
+*.log
+.DS_Store

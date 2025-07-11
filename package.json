@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node start.js",
+    "start:postgres": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,7 @@
     "pdf-parse": "^1.1.1",
     "pg": "^8.16.3",
     "pgvector": "^0.2.1",
+    "sqlite3": "^5.1.7",
     "wavefile": "^11.0.0"
   }
 }
