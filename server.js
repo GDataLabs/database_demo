@@ -205,7 +205,7 @@ const dbConfig = {
     port: process.env.DB_PORT || 5432,
 };
 
-const vertex_ai = new VertexAI({project: 'global-voice-connect', location: 'us-central1'});
+const vertex_ai = new VertexAI({project: 'alert-brook-272309', location: 'us-central1'});
 const model = 'gemini-1.5-flash';
 
 const textModel = vertex_ai.getGenerativeModel({
