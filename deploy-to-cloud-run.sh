@@ -2,7 +2,7 @@
 
 # Deploy GABTA Database to Google Cloud Run
 
-PROJECT_ID="your-project-id"  # CHANGE THIS to your Google Cloud project ID
+PROJECT_ID="alert-brook-272309"  # Google Cloud project ID
 SERVICE_NAME="gabta-database-demo"
 REGION="us-central1"
 
