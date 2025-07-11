@@ -1,0 +1,3260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GABTA Data Portal</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for plotting -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts: Inter + Poppins for branding -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F2;
+        }
+        
+        /* Sophisticated warm color scheme */
+        :root {
+            --bg-cream: #F8F7F2;
+            --primary-brown: #8B6F47;
+            --secondary-brown: #A0826D;
+            --tertiary-brown: #6D5A47;
+            --light-brown: #D4C4B0;
+            --panel-bg: rgba(255, 255, 255, 0.7);
+            --border-brown: rgba(139, 119, 101, 0.2);
+            --text-dark: #3D3935;
+            --success-green: #2E7D32;
+            --accent-red: #8B4513;
+            --accent-neutral: #8D6E63;
+            --warm-gray: #9E9E9E;
+        }
+        
+        /* Glass morphism effects */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-brown);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(139, 119, 101, 0.1);
+        }
+        
+        /* Gradient text effects */
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary-brown), var(--secondary-brown));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        /* Simple animation for the loading spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            border-top-color: #3498db;
+            animation: spin 1s linear infinite;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Hide the default file input */
+        .hidden-file-input {
+            display: none;
+        }
+        
+        /* Status indicator animations */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .status-indicator {
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.connected {
+            background: #2e7d32 !important; /* Green when connected */
+        }
+        
+        .status-indicator.warning {
+            background: #f57c00 !important; /* Orange for warning */
+        }
+        
+        .status-indicator.loading {
+            background: #3498db !important; /* Blue for loading */
+            animation: pulse 1s infinite; /* Faster pulse */
+        }
+        
+        /* Listening indicator animations */
+        @keyframes listening-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+                transform: scale(1.05);
+            }
+        }
+        
+        .listening-indicator {
+            animation: listening-pulse 1.5s infinite !important;
+        }
+        
+        /* Synchronized pulsing animation for (press to stop) text */
+        @keyframes text-pulse {
+            0%, 100% { 
+                opacity: 1;
+            }
+            50% { 
+                opacity: 0.3;
+            }
+        }
+        
+        .animate-pulse {
+            animation: text-pulse 1.5s infinite;
+        }
+        
+        /* Active microphone visual feedback */
+        .mic-active {
+            animation: listening-pulse 1s infinite !important;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.5) !important;
+        }
+        
+        /* Conversation status indicator */
+        .conversation-active {
+            display: flex !important;
+            align-items: center;
+            gap: 8px;
+            color: var(--success-green) !important;
+            font-weight: 600;
+        }
+        
+        .conversation-active::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--success-green);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+
+        <!-- Header Section -->
+        <header class="glass-panel flex justify-between items-center mb-8 p-6" style="border-bottom: 2px solid var(--border-brown);">
+            <div class="flex items-center space-x-6">
+                <!-- Brand Logos -->
+                <div class="flex items-center space-x-4">
+                    <img src="./logos/gabta_logo.jpg" alt="GABTA Logo" class="h-16 w-auto object-contain rounded-lg shadow-sm" onError="this.style.display='none'; console.log('GABTA logo failed to load');">
+                    <div class="h-12 w-px" style="background-color: var(--border-brown);"></div>
+                    <img src="./logos/gdata_night_logo.png" alt="G-Data Labs Logo" class="h-12 w-auto object-contain rounded-lg shadow-sm" onError="this.style.display='none'; console.log('G-Data night logo failed to load');">
+                </div>
+                <!-- Title and subtitle -->
+                <div class="ml-4">
+                    <h1 class="text-3xl md:text-4xl font-bold gradient-text" style="font-family: 'Poppins', sans-serif;">
+                        GABTA Data Portal
+                    </h1>
+                    <p class="text-sm font-medium" style="color: var(--secondary-brown);">AI-Powered Student Analytics</p>
+                    <p id="welcome-message" class="text-sm mt-1" style="color: var(--text-dark);">Welcome.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- API Status Indicator -->
+                <button id="connection-status-btn" class="api-status flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-md" style="background: rgba(139, 119, 101, 0.1); border: 1px solid rgba(139, 119, 101, 0.2);" title="Click to check connection details">
+                    <span class="status-indicator w-2 h-2 rounded-full" id="statusIndicator" style="background: #c62828;"></span>
+                    <span id="statusText" class="text-sm font-medium" style="color: var(--text-dark);">Disconnected</span>
+                </button>
+                
+                <button id="logout-button" style="background: linear-gradient(135deg, var(--accent-red), var(--tertiary-brown)); color: white;" class="font-semibold py-3 px-6 rounded-2xl shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl">
+                    <span class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span>Logout</span>
+                    </span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="mb-8">
+            <nav class="flex flex-wrap bg-white rounded-xl shadow-sm p-2 border border-gray-200" aria-label="Tabs">
+                <button id="tab-query" class="tab-button active-tab">
+                    <span class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <span>Query</span>
+                    </span>
+                </button>
+                <button id="tab-entry" class="tab-button">
+                    <span class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        <span>Data Entry</span>
+                    </span>
+                </button>
+                <button id="tab-financials" class="tab-button director-only">
+                    <span class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                        <span>Financials</span>
+                    </span>
+                </button>
+                <button id="tab-staff" class="tab-button">
+                    <span class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                        <span>Staff</span>
+                    </span>
+                </button>
+                
+                <button id="tab-upload" class="tab-button">
+                    <span class="flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <span>Document Upload</span>
+                    </span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <main>
+            <!-- Query Section -->
+            <div id="query-section" class="tab-content"></div>
+            <!-- Data Entry Section -->
+            <div id="entry-section" class="tab-content hidden"></div>
+            <!-- Financials Section -->
+            <div id="financials-section" class="tab-content hidden"></div>
+            <!-- Staff Section -->
+            <div id="staff-section" class="tab-content hidden"></div>
+            
+            <!-- Document Upload Section -->
+            <div id="upload-section" class="tab-content hidden"></div>
+        </main>
+    </div>
+
+    <script>
+        // --- Authentication Check ---
+        /*
+        if (!localStorage.getItem('authToken')) {
+            window.location.href = './login.html';
+        }
+        */
+
+        // --- Global Variables ---
+        let conversationHistory = [];
+        let userRole = 'instructor'; // Default role
+        let userName = 'User';
+        
+        // Load conversation history from sessionStorage
+        function loadConversationHistory() {
+            const saved = sessionStorage.getItem('conversationHistory');
+            if (saved) {
+                conversationHistory = JSON.parse(saved);
+            }
+        }
+        
+        // Save conversation history to sessionStorage
+        function saveConversationHistory() {
+            sessionStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
+        }
+        
+        // --- Mock Data ---
+        const mockUserData = { name: 'Director Smith' };
+        const mockStudentData = [
+            { id: 1, name: 'John Doe', trade: 'Electrician' },
+            { id: 2, name: 'Jane Smith', trade: 'Plumbing' },
+        ];
+        const mockInvestors = [
+            { id: 1, name: 'BuildCorp Inc.', type: 'Corporate' },
+            { id: 2, name: 'The Helping Hand Foundation', type: 'Foundation' },
+        ];
+        const mockPrograms = [
+            { id: 1, name: 'Scholarship Fund' },
+            { id: 2, name: 'New Equipment Drive' },
+        ];
+        const mockDonations = [
+            { investorId: 1, programId: 2, amount: 5000.00 },
+            { investorId: 2, programId: 1, amount: 10000.00 },
+        ];
+        const mockStaff = [
+            { id: 1, name: 'David Chen', role: 'Lead Instructor' },
+            { id: 2, name: 'Maria Garcia', role: 'Admissions Coordinator' },
+            { id: 3, name: 'Director Smith', role: 'Director' }
+        ];
+
+        // --- DOM Element References ---
+        const logoutButton = document.getElementById('logout-button');
+        const tabs = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // --- Initial Page Load ---
+        window.onload = () => {
+            document.getElementById('welcome-message').textContent = `Welcome, ${mockUserData.name}.`;
+            loadConversationHistory(); // Load saved conversation history
+            setupQueryTab();
+            setupEntryTab();
+            setupFinancialsTab();
+            setupStaffTab();
+            setupUploadTab();
+            
+            tabs[0].classList.add('active-tab');
+            tabContents[0].classList.remove('hidden');
+        };
+
+        // --- Event Listeners ---
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            sessionStorage.removeItem('conversationHistory'); // Clear conversation on logout
+            alert("You have been logged out.");
+            // window.location.href = './login.html';
+        });
+        
+        // Clear conversation history when window/tab is closed
+        window.addEventListener('beforeunload', () => {
+            sessionStorage.removeItem('conversationHistory');
+        });
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active-tab'));
+                tabContents.forEach(c => c.classList.add('hidden'));
+
+                tab.classList.add('active-tab');
+                const targetContent = document.getElementById(tab.id.replace('tab-', '') + '-section');
+                if (targetContent) {
+                    targetContent.classList.remove('hidden');
+                }
+            });
+        });
+
+        // --- Tab Content Setup Functions ---
+        function setupQueryTab() {
+            const section = document.getElementById('query-section');
+            section.innerHTML = `
+                <div class="glass-panel p-8">
+                    <label for="query-input" class="block text-lg font-semibold mb-3" style="color: var(--text-dark);">Ask a question about student or financial data</label>
+                    <div class="relative">
+                        <textarea id="query-input" rows="6" class="w-full p-4 rounded-2xl pr-32 transition-all duration-300" style="border: 2px solid var(--border-brown); background: rgba(255, 255, 255, 0.9); color: var(--text-dark); backdrop-filter: blur(5px);" placeholder="e.g., 'Which students need housing support?' or 'Show all donations from BuildCorp Inc.'"></textarea>
+                        <div class="absolute right-4 top-4 flex flex-col space-y-3">
+                            <button id="conversation-mode-btn" class="group px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center min-w-[90px]" style="background: linear-gradient(135deg, var(--primary-brown), var(--secondary-brown)); color: white;" title="Start Conversation Mode">
+                                <span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">TALK</span>
+                            </button>
+                            <button id="speech-to-text-btn" class="group px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center min-w-[90px]" style="background: linear-gradient(135deg, var(--accent-neutral), var(--warm-gray)); color: white;" title="Speech to Text">
+                                <span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">MIC</span>
+                            </button>
+                            <button id="text-to-speech-btn" class="group px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center min-w-[90px]" style="background: linear-gradient(135deg, var(--accent-red), var(--tertiary-brown)); color: white;" title="Read Response Aloud">
+                                <span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">🔊</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 mt-6">
+                        <button id="submit-query" class="flex-1 font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" style="background: linear-gradient(135deg, var(--primary-brown), var(--secondary-brown)); color: white;">
+                            <span class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                </svg>
+                                <span>Submit Query</span>
+                            </span>
+                        </button>
+                        <button id="clear-query" class="font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" style="background: linear-gradient(135deg, var(--light-brown), var(--warm-gray)); color: var(--text-dark);">
+                            <span class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                <span>Clear</span>
+                            </span>
+                        </button>
+                    </div>
+                    <div id="conversation-status" class="mt-3 text-sm hidden" style="color: var(--secondary-brown);"></div>
+                    
+                    <!-- RAG Management Section -->
+                    <div class="mt-6 p-4 rounded-xl" style="background: rgba(139, 119, 101, 0.1); border: 1px solid var(--border-brown);">
+                        <details class="cursor-pointer">
+                            <summary class="font-semibold text-sm mb-3" style="color: var(--text-dark);">
+                                🗂️ RAG Document Management (Advanced)
+                            </summary>
+                            <div class="space-y-3 mt-3">
+                                <div class="grid grid-cols-2 gap-2 mb-3">
+                                    <button id="view-documents-btn" class="px-4 py-2 text-xs rounded-lg shadow hover:shadow-md transition-all" style="background: var(--light-brown); color: var(--text-dark);">
+                                        📄 View Documents
+                                    </button>
+                                    <button id="clear-rag-btn" class="px-4 py-2 text-xs rounded-lg shadow hover:shadow-md transition-all" style="background: linear-gradient(135deg, #f87171, #dc2626); color: white;">
+                                        🗑️ Clear All RAG Data
+                                    </button>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="test-elevenlabs-btn" class="px-4 py-2 text-xs rounded-lg shadow hover:shadow-md transition-all" style="background: var(--primary-brown); color: white;">
+                                        🎤 Test ElevenLabs
+                                    </button>
+                                    <button id="test-speech-btn" class="px-4 py-2 text-xs rounded-lg shadow hover:shadow-md transition-all" style="background: var(--secondary-brown); color: white;">
+                                        🔊 Test Voice
+                                    </button>
+                                </div>
+                                <div id="voice-selector-container" class="mt-3">
+                                    <label for="voice-selector" class="block text-sm font-medium text-gray-700">Select a Voice:</label>
+                                    <select id="voice-selector" class="mt-1 block w-full p-2 border border-gray-300 bg-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Loading voices...</option>
+                                    </select>
+                                </div>
+                                <div id="rag-status" class="text-xs" style="color: var(--secondary-brown);"></div>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+                <div id="conversation-history" class="mt-8"></div>
+                <div id="results-container" class="mt-8">
+                    <div id="loading-spinner" class="hidden flex justify-center items-center py-8">
+                        <div class="spinner h-12 w-12 rounded-full border-4" style="border-color: var(--border-brown); border-top-color: var(--primary-brown);"></div>
+                    </div>
+                    <div id="results-output" class="glass-panel p-8 min-h-[120px]">
+                        <p class="text-center" style="color: var(--secondary-brown);">Results will appear here...</p>
+                    </div>
+                    <div id="chart-container" class="mt-6 glass-panel p-8 hidden">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-semibold" style="color: var(--text-dark);">Data Visualization</h3>
+                            <div class="flex space-x-3">
+                                <button id="verify-chart" class="font-semibold px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105" style="background: linear-gradient(135deg, var(--primary-brown), var(--secondary-brown)); color: white;">
+                                    <span class="flex items-center space-x-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span>Verify with AI</span>
+                                    </span>
+                                </button>
+                                <button id="download-chart" class="font-semibold px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105" style="background: linear-gradient(135deg, var(--success-green), #1B5E20); color: white;">
+                                    <span class="flex items-center space-x-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <span>Download</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="w-full max-w-4xl mx-auto" style="height: 400px;">
+                            <canvas id="data-chart" style="border-radius: 16px; max-width: 100%; max-height: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('submit-query').addEventListener('click', handleQuerySubmit);
+            document.getElementById('clear-query').addEventListener('click', clearQuery);
+            document.getElementById('conversation-mode-btn').addEventListener('click', toggleConversationMode);
+            document.getElementById('speech-to-text-btn').addEventListener('click', startSpeechToText);
+            document.getElementById('text-to-speech-btn').addEventListener('click', readResponseAloud);
+            document.getElementById('view-documents-btn').addEventListener('click', viewRAGDocuments);
+            document.getElementById('clear-rag-btn').addEventListener('click', clearRAGDocuments);
+            document.getElementById('test-elevenlabs-btn').addEventListener('click', testElevenLabs);
+            document.getElementById('test-speech-btn').addEventListener('click', testSpeech);
+            displayConversationHistory();
+            
+            // Fetch and populate voices
+            const openAIVoices = [
+                { id: 'alloy', name: 'Alloy (neutral, american)', provider: 'openai' },
+                { id: 'echo', name: 'Echo (male, american)', provider: 'openai' },
+                { id: 'fable', name: 'Fable (british)', provider: 'openai' },
+                { id: 'onyx', name: 'Onyx (male, american)', provider: 'openai' },
+                { id: 'nova', name: 'Nova (female, american)', provider: 'openai' },
+                { id: 'shimmer', name: 'Shimmer (female, american)', provider: 'openai' }
+            ];
+
+            const voiceSelector = document.getElementById('voice-selector');
+            voiceSelector.innerHTML = ''; // Clear loading message
+
+            // Add OpenAI voices
+            const openAIGroup = document.createElement('optgroup');
+            openAIGroup.label = 'OpenAI Voices';
+            openAIVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = JSON.stringify({ id: voice.id, provider: voice.provider });
+                option.textContent = voice.name;
+                openAIGroup.appendChild(option);
+            });
+            voiceSelector.appendChild(openAIGroup);
+
+            // Fetch and add ElevenLabs voices
+            fetch('/api/voices')
+                .then(response => response.json())
+                .then(elevenLabsVoices => {
+                    const elevenLabsGroup = document.createElement('optgroup');
+                    elevenLabsGroup.label = 'ElevenLabs Voices';
+                    elevenLabsVoices.forEach(voice => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify({ id: voice.voice_id, provider: 'elevenlabs' });
+                        option.textContent = `${voice.name} (${voice.labels.gender}, ${voice.labels.accent})`;
+                        elevenLabsGroup.appendChild(option);
+                    });
+                    voiceSelector.appendChild(elevenLabsGroup);
+                })
+                .catch(error => {
+                    console.error('Error fetching ElevenLabs voices:', error);
+                    const errorOption = document.createElement('option');
+                    errorOption.textContent = 'Could not load ElevenLabs voices';
+                    errorOption.disabled = true;
+                    voiceSelector.appendChild(errorOption);
+                });
+        }
+
+        async function setupEntryTab() {
+            const section = document.getElementById('entry-section');
+            section.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-lg max-w-2xl mx-auto">
+                    <h2 class="text-xl font-bold mb-4">Data Entry</h2>
+                    <div class="mb-6">
+                        <label for="entry-type-select" class="block text-sm font-medium text-gray-700">What do you want to add?</label>
+                        <select id="entry-type-select" class="mt-1 block w-full p-2 border border-gray-300 bg-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="student_note">Student Note</option>
+                            <option value="staff_note">Staff Note</option>
+                            <option value="new_student">New Student</option>
+                            <option value="new_staff">New Staff Member</option>
+                            <option value="new_investor">New Investor</option>
+                            <option value="new_donation">New Donation</option>
+                        </select>
+                    </div>
+                    <div id="dynamic-form-container"></div>
+                </div>
+            `;
+            const entryTypeSelect = document.getElementById('entry-type-select');
+            
+            // Fetch students for the form
+            try {
+                const response = await fetch('/api/students');
+                if (response.ok) {
+                    const students = await response.json();
+                    entryTypeSelect.addEventListener('change', (e) => updateEntryForm(e, students));
+                    updateEntryForm({ target: { value: 'student_note' } }, students); // Load initial form
+                } else {
+                    throw new Error('Failed to fetch students');
+                }
+            } catch (error) {
+                console.error(error);
+                // Fallback to mock data if fetch fails
+                entryTypeSelect.addEventListener('change', (e) => updateEntryForm(e, mockStudentData));
+                updateEntryForm({ target: { value: 'student_note' } }, mockStudentData);
+            }
+        }
+
+        function updateEntryForm(event, students = mockStudentData) {
+            const formType = event.target.value;
+            const container = document.getElementById('dynamic-form-container');
+            let formHTML = '';
+
+            switch (formType) {
+                case 'student_note':
+                    let studentOptions = students.map(s => `<option value="${s.full_name || s.name}"></option>`).join('');
+                    formHTML = `
+                        <h3 class="text-lg font-semibold mb-3 border-t pt-4">Add Student Note</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="student-name-input" class="block text-sm font-medium">Student Name</label>
+                                <div class="relative">
+                                    <input type="text" id="student-name-input" list="student-datalist" class="mt-1 w-full form-input pr-12" placeholder="Type or select a student">
+                                    <button type="button" id="student-name-speech-btn" class="absolute right-2 top-2 group p-1.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 w-8 h-8 flex items-center justify-center" style="background: linear-gradient(135deg, var(--accent-blue), #2980B9); color: white;" title="Speech to Text for Student Name">
+                                        <span class="text-sm group-hover:scale-110 transition-transform duration-300">🎤</span>
+                                    </button>
+                                </div>
+                                <datalist id="student-datalist">${studentOptions}</datalist>
+                            </div>
+                            <div>
+                                <label for="note-text" class="block text-sm font-medium">Note</label>
+                                <div class="relative">
+                                    <textarea id="note-text" rows="3" class="mt-1 w-full form-input pr-12" placeholder="Enter a note..."></textarea>
+                                    <button type="button" id="note-speech-btn" class="absolute right-2 top-2 group bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white p-1.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 w-8 h-8 flex items-center justify-center" title="Speech to Text for Note">
+                                        <span class="text-sm group-hover:scale-110 transition-transform duration-200">🎤</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div><label class="block text-sm font-medium">Attach a Photo</label><div class="mt-1 flex items-center"><button id="upload-button" class="form-button-secondary">Choose File</button><span id="file-name" class="ml-3 text-gray-600">No file chosen</span></div><input type="file" id="file-input" accept="image/*" class="hidden-file-input"></div>
+                            <div id="image-preview-container" class="hidden mt-4"><img id="image-preview" src="#" alt="Image Preview" class="rounded-lg max-h-40"/></div>
+                        </div>
+                    `;
+                    break;
+                case 'staff_note':
+                    let staffOptions = mockStaff.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                    formHTML = `
+                        <h3 class="text-lg font-semibold mb-3 border-t pt-4">Add Staff Note</h3>
+                        <div class="space-y-4">
+                            <div><label for="staff-select" class="block text-sm font-medium">Select Staff Member</label><select id="staff-select" class="mt-1 w-full form-input">${staffOptions}</select></div>
+                            <div>
+                                <label for="note-text" class="block text-sm font-medium">Note</label>
+                                <div class="relative">
+                                    <textarea id="note-text" rows="3" class="mt-1 w-full form-input pr-12" placeholder="Enter a note about a staff member..."></textarea>
+                                    <button type="button" id="staff-note-speech-btn" class="absolute right-2 top-2 group bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white p-1.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 w-8 h-8 flex items-center justify-center" title="Speech to Text for Staff Note">
+                                        <span class="text-sm group-hover:scale-110 transition-transform duration-200">🎤</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'new_student':
+                    formHTML = `
+                        <h3 class="text-lg font-semibold mb-3 border-t pt-4">Add New Student</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="student-name" class="block text-sm font-medium">Full Name</label>
+                                <div class="relative">
+                                    <input type="text" id="student-name" class="mt-1 w-full form-input pr-12">
+                                    <button type="button" id="new-student-name-speech-btn" class="absolute right-2 top-2 group bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-1.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 w-8 h-8 flex items-center justify-center" title="Speech to Text for Student Name">
+                                        <span class="text-sm group-hover:scale-110 transition-transform duration-200">🎤</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="student-trade" class="block text-sm font-medium">Trade</label>
+                                <div class="relative">
+                                    <input type="text" id="student-trade" class="mt-1 w-full form-input pr-12">
+                                    <button type="button" id="student-trade-speech-btn" class="absolute right-2 top-2 group text-white p-1.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 w-8 h-8 flex items-center justify-center" style="background: linear-gradient(135deg, #f87171, #dc2626);" title="Speech to Text for Trade">
+                                        <span class="text-sm group-hover:scale-110 transition-transform duration-200">🎤</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'new_staff':
+                    formHTML = `
+                        <h3 class="text-lg font-semibold mb-3 border-t pt-4">Add New Staff Member</h3>
+                        <div class="space-y-4">
+                            <div><label for="staff-name" class="block text-sm font-medium">Full Name</label><input type="text" id="staff-name" class="mt-1 w-full form-input"></div>
+                            <div><label for="staff-role" class="block text-sm font-medium">Role</label><input type="text" id="staff-role" class="mt-1 w-full form-input" placeholder="e.g., Instructor"></div>
+                        </div>
+                    `;
+                    break;
+                case 'new_investor':
+                     formHTML = `
+                        <h3 class="text-lg font-semibold mb-3 border-t pt-4">Add New Investor</h3>
+                        <div class="space-y-4">
+                            <div><label for="investor-name" class="block text-sm font-medium">Investor Name</label><input type="text" id="investor-name" class="mt-1 w-full form-input"></div>
+                            <div><label for="investor-type" class="block text-sm font-medium">Type</label><select id="investor-type" class="mt-1 w-full form-input"><option>Corporate</option><option>Foundation</option><option>Individual</option></select></div>
+                        </div>
+                    `;
+                    break;
+                case 'new_donation':
+                    let investorOptions = mockInvestors.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+                    let programOptions = mockPrograms.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                    formHTML = `
+                        <h3 class="text-lg font-semibold mb-3 border-t pt-4">Log New Donation</h3>
+                        <div class="space-y-4">
+                             <div><label for="investor-select" class="block text-sm font-medium">Select Investor</label><select id="investor-select" class="mt-1 w-full form-input">${investorOptions}</select></div>
+                             <div><label for="program-select" class="block text-sm font-medium">Select Program/Fund</label><select id="program-select" class="mt-1 w-full form-input">${programOptions}</select></div>
+                             <div><label for="donation-amount" class="block text-sm font-medium">Amount</label><input type="number" id="donation-amount" class="mt-1 w-full form-input" placeholder="e.g., 5000.00"></div>
+                        </div>
+                    `;
+                    break;
+            }
+            container.innerHTML = `<div class="border-t border-gray-200 mt-6"></div>${formHTML}<button id="submit-entry" class="mt-6 w-full form-button-primary">Submit Entry</button>`;
+            
+            if (formType === 'student_note') {
+                document.getElementById('upload-button').addEventListener('click', () => document.getElementById('file-input').click());
+                document.getElementById('file-input').addEventListener('change', handleFileSelect);
+                
+                // Add speech button event listeners for student_note form
+                document.getElementById('student-name-speech-btn').addEventListener('click', () => startSpeechForField('student-name-input'));
+                document.getElementById('note-speech-btn').addEventListener('click', () => startSpeechForField('note-text'));
+            }
+            
+            if (formType === 'staff_note') {
+                // Add speech button event listener for staff_note form
+                document.getElementById('staff-note-speech-btn').addEventListener('click', () => startSpeechForField('note-text'));
+            }
+            
+            if (formType === 'new_student') {
+                // Add speech button event listeners for new_student form
+                document.getElementById('new-student-name-speech-btn').addEventListener('click', () => startSpeechForField('student-name'));
+                document.getElementById('student-trade-speech-btn').addEventListener('click', () => startSpeechForField('student-trade'));
+            }
+            
+            document.getElementById('submit-entry').addEventListener('click', () => handleEntrySubmit(students));
+        }
+
+        function setupFinancialsTab() {
+            const section = document.getElementById('financials-section');
+            section.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="text-xl font-bold mb-4">Investors</h2><div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="table-header">Name</th><th class="table-header">Type</th></tr></thead><tbody id="investors-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div></div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="text-xl font-bold mb-4">Recent Donations</h2><div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="table-header">Investor</th><th class="table-header">Amount</th><th class="table-header">Program</th></tr></thead><tbody id="donations-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div></div>
+                </div>
+            `;
+            document.getElementById('investors-table-body').innerHTML = mockInvestors.map(i => `<tr><td class="table-cell font-medium">${i.name}</td><td class="table-cell">${i.type}</td></tr>`).join('');
+            document.getElementById('donations-table-body').innerHTML = mockDonations.map(d => `<tr><td class="table-cell font-medium">${mockInvestors.find(i => i.id === d.investorId).name}</td><td class="table-cell">$${d.amount.toFixed(2)}</td><td class="table-cell">${mockPrograms.find(p => p.id === d.programId).name}</td></tr>`).join('');
+        }
+
+        function setupStaffTab() {
+            const section = document.getElementById('staff-section');
+            section.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-bold mb-4">Staff Directory</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="table-header">Name</th>
+                                    <th class="table-header">Role</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staff-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            document.getElementById('staff-table-body').innerHTML = mockStaff.map(s => `<tr><td class="table-cell font-medium">${s.name}</td><td class="table-cell">${s.role}</td></tr>`).join('');
+        }
+        
+        function setupUploadTab() {
+            const section = document.getElementById('upload-section');
+            section.innerHTML = `
+                <div class="space-y-8">
+                    <div class="glass-panel p-8">
+                        <h2 class="text-2xl font-bold mb-6 gradient-text" style="font-family: 'Poppins', sans-serif;">Document Upload to RAG System</h2>
+                        <p class="text-gray-600 mb-8">Upload CSV, PDF, or text files to add them to the knowledge base for AI queries.</p>
+                        
+                        <!-- Upload Form -->
+                        <form id="document-upload-form" class="space-y-6">
+                            <div>
+                                <label for="document-file" class="block text-sm font-medium mb-3" style="color: var(--text-dark);">
+                                    Select Document
+                                </label>
+                                <div class="flex items-center justify-center w-full">
+                                    <label for="document-file" class="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-300 hover:bg-gray-50" style="border-color: var(--border-brown);">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg class="w-8 h-8 mb-4" style="color: var(--secondary-brown);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                            </svg>
+                                            <p class="mb-2 text-sm" style="color: var(--text-dark);">
+                                                <span class="font-semibold">Click to upload</span> or drag and drop
+                                            </p>
+                                            <p class="text-xs" style="color: var(--warm-gray);">CSV, PDF, or TXT files (MAX. 10MB)</p>
+                                        </div>
+                                        <input id="document-file" type="file" class="hidden" accept=".csv,.pdf,.txt" />
+                                    </label>
+                                </div>
+                                <div id="file-info" class="mt-4 hidden">
+                                    <p class="text-sm font-medium" style="color: var(--text-dark);">Selected file:</p>
+                                    <p id="file-name" class="text-sm" style="color: var(--secondary-brown);"></p>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" id="upload-document-btn" class="w-full font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed" style="background: linear-gradient(135deg, var(--success-green), #1B5E20); color: white;">
+                                <span class="flex items-center justify-center space-x-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                    </svg>
+                                    <span>Upload to RAG System</span>
+                                </span>
+                            </button>
+                        </form>
+                        
+                        <!-- Upload Status -->
+                        <div id="upload-status" class="mt-6 hidden">
+                            <div id="upload-progress" class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div id="upload-progress-bar" class="h-2 rounded-full transition-all duration-300" style="background: linear-gradient(135deg, var(--success-green), #1B5E20); width: 0%"></div>
+                            </div>
+                            <p id="upload-message" class="text-sm text-center" style="color: var(--text-dark);"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Test Tool -->
+                    <div class="glass-panel p-8">
+                        <h3 class="text-xl font-semibold mb-4 gradient-text" style="font-family: 'Poppins', sans-serif;">Test Document Search</h3>
+                        <p class="text-gray-600 mb-4">Test if specific content can be found in your uploaded documents</p>
+                        
+                        <div class="space-y-3">
+                            <div class="flex space-x-3">
+                                <input type="text" id="search-test-input" placeholder="e.g., 'student ID 1001' or 'attendance 95%'" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button id="test-search-btn" class="font-semibold px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105" style="background: linear-gradient(135deg, var(--success-green), #1B5E20); color: white;">
+                                    Test Search
+                                </button>
+                            </div>
+                            <!-- Enhanced RAG Test -->
+                            <div class="flex space-x-3">
+                                <input type="text" id="enhanced-rag-test-input" placeholder="e.g., 'What is the avg quiz score for student ID 1013?'" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <button id="test-enhanced-rag-btn" class="font-semibold px-6 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED); color: white;">
+                                    🚀 Test Enhanced RAG
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="search-results" class="mt-4 hidden">
+                            <h4 class="font-semibold mb-2" style="color: var(--text-dark);">Search Results:</h4>
+                            <div id="search-results-content" class="space-y-2"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Documents in RAG System -->
+                    <div class="glass-panel p-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold gradient-text" style="font-family: 'Poppins', sans-serif;">Documents in RAG System</h3>
+                            <button id="refresh-documents" class="font-semibold px-4 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105" style="background: linear-gradient(135deg, var(--primary-brown), var(--secondary-brown)); color: white;">
+                                <span class="flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    <span>Refresh</span>
+                                </span>
+                            </button>
+                        </div>
+                        <div id="documents-list" class="space-y-3">
+                            <p class="text-gray-500 text-center py-8">Loading documents...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Upload History -->
+                    <div class="glass-panel p-8">
+                        <h3 class="text-xl font-semibold mb-4 gradient-text" style="font-family: 'Poppins', sans-serif;">Recent Uploads</h3>
+                        <div id="upload-history" class="space-y-3">
+                            <p class="text-gray-500 text-center py-8">No documents uploaded yet</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            const fileInput = document.getElementById('document-file');
+            const fileInfo = document.getElementById('file-info');
+            const fileName = document.getElementById('file-name');
+            const uploadForm = document.getElementById('document-upload-form');
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    fileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                    fileInfo.classList.remove('hidden');
+                }
+            });
+            
+            uploadForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert('Please select a file first');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('document', file);
+                
+                const uploadBtn = document.getElementById('upload-document-btn');
+                const uploadStatus = document.getElementById('upload-status');
+                const uploadMessage = document.getElementById('upload-message');
+                const progressBar = document.getElementById('upload-progress-bar');
+                
+                try {
+                    updateConnectionStatus('connecting');
+                    uploadBtn.disabled = true;
+                    uploadStatus.classList.remove('hidden');
+                    uploadMessage.textContent = 'Uploading and processing document...';
+                    progressBar.style.width = '50%';
+                    
+                    const response = await fetch('/api/upload/documents', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Upload failed');
+                    }
+                    
+                    const result = await response.json();
+                    updateConnectionStatus('connected');
+                    progressBar.style.width = '100%';
+                    uploadMessage.textContent = `Success! ${result.filename} uploaded to RAG system (${result.contentLength} characters processed)`;
+                    uploadMessage.style.color = 'var(--success-green)';
+                    
+                    // Reset form
+                    fileInput.value = '';
+                    fileInfo.classList.add('hidden');
+                    
+                    // Add to history and refresh documents list
+                    addToUploadHistory(result.filename, result.contentLength);
+                    loadDocuments();
+                    
+                } catch (error) {
+                    updateConnectionStatus('error');
+                    progressBar.style.width = '0%';
+                    uploadMessage.textContent = `Error: ${error.message}`;
+                    uploadMessage.style.color = '#ef4444';
+                } finally {
+                    uploadBtn.disabled = false;
+                    setTimeout(() => {
+                        uploadStatus.classList.add('hidden');
+                        progressBar.style.width = '0%';
+                        uploadMessage.style.color = 'var(--text-dark)';
+                    }, 3000);
+                }
+            });
+            
+            // Add refresh documents event listener
+            document.getElementById('refresh-documents').addEventListener('click', loadDocuments);
+            
+            // Add search test event listener
+            document.getElementById('test-search-btn').addEventListener('click', testDocumentSearch);
+            document.getElementById('test-enhanced-rag-btn').addEventListener('click', testEnhancedRAG);
+            document.getElementById('search-test-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    testDocumentSearch();
+                }
+            });
+            document.getElementById('enhanced-rag-test-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    testEnhancedRAG();
+                }
+            });
+            
+            // Load documents when tab is first opened
+            loadDocuments();
+        }
+        
+        function addToUploadHistory(filename, contentLength) {
+            const historyContainer = document.getElementById('upload-history');
+            const timestamp = new Date().toLocaleString();
+            
+            const historyItem = document.createElement('div');
+            historyItem.className = 'flex justify-between items-center p-4 bg-white rounded-lg border border-gray-200';
+            historyItem.innerHTML = `
+                <div>
+                    <p class="font-medium" style="color: var(--text-dark);">${filename}</p>
+                    <p class="text-sm" style="color: var(--warm-gray);">${contentLength} characters • ${timestamp}</p>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <svg class="w-4 h-4" style="color: var(--success-green);" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-sm font-medium" style="color: var(--success-green);">Uploaded</span>
+                </div>
+            `;
+            
+            // Remove "No documents" message if it exists
+            const noDocsMessage = historyContainer.querySelector('p');
+            if (noDocsMessage && noDocsMessage.textContent.includes('No documents')) {
+                noDocsMessage.remove();
+            }
+            
+            // Add to top of history
+            historyContainer.insertBefore(historyItem, historyContainer.firstChild);
+        }
+        
+        async function loadDocuments() {
+            const documentsList = document.getElementById('documents-list');
+            
+            try {
+                updateConnectionStatus('connecting');
+                documentsList.innerHTML = '<p class="text-gray-500 text-center py-8">Loading documents...</p>';
+                
+                const response = await fetch('/api/documents');
+                if (!response.ok) {
+                    throw new Error('Failed to load documents');
+                }
+                
+                const data = await response.json();
+                updateConnectionStatus('connected');
+                
+                // Handle both direct array and object with documents property
+                const documents = Array.isArray(data) ? data : (data.documents || []);
+                
+                if (!Array.isArray(documents) || documents.length === 0) {
+                    documentsList.innerHTML = '<p class="text-gray-500 text-center py-8">No documents in RAG system yet</p>';
+                    return;
+                }
+                
+                documentsList.innerHTML = '';
+                documents.forEach((doc, index) => {
+                    const docItem = document.createElement('div');
+                    docItem.className = 'p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow';
+                    docItem.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm font-medium px-2 py-1 rounded" style="background-color: var(--light-brown); color: var(--text-dark);">Doc #${doc.id}</span>
+                                <span class="text-sm" style="color: var(--warm-gray);">${doc.content_length} characters</span>
+                            </div>
+                            <button onclick="testDocumentQuery(${doc.id}, '${doc.preview.replace(/'/g, "\\'")}...')" class="text-xs px-3 py-1 rounded-full transition-colors hover:bg-blue-100" style="color: var(--primary-brown); border: 1px solid var(--border-brown);">
+                                Test Query
+                            </button>
+                        </div>
+                        <div class="text-sm" style="color: var(--text-dark);">
+                            <strong>Preview:</strong> ${doc.preview}...
+                        </div>
+                    `;
+                    documentsList.appendChild(docItem);
+                });
+                
+                // Add summary
+                const summary = document.createElement('div');
+                summary.className = 'mt-4 p-3 rounded-lg text-center text-sm font-medium';
+                summary.style.backgroundColor = 'var(--light-brown)';
+                summary.style.color = 'var(--text-dark)';
+                summary.textContent = `Total: ${documents.length} documents available for RAG queries`;
+                documentsList.appendChild(summary);
+                
+            } catch (error) {
+                updateConnectionStatus('error');
+                documentsList.innerHTML = `<p class="text-red-600 text-center py-8">Error loading documents: ${error.message}</p>`;
+            }
+        }
+        
+        async function testDocumentSearch() {
+            const searchInput = document.getElementById('search-test-input');
+            const searchResults = document.getElementById('search-results');
+            const searchResultsContent = document.getElementById('search-results-content');
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            try {
+                updateConnectionStatus('connecting');
+                searchResultsContent.innerHTML = '<p class="text-gray-500">Searching...</p>';
+                searchResults.classList.remove('hidden');
+                
+                const response = await fetch('/api/test-search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Search test failed');
+                }
+                
+                const data = await response.json();
+                updateConnectionStatus('connected');
+                
+                searchResultsContent.innerHTML = '';
+                
+                if (data.results.length === 0) {
+                    searchResultsContent.innerHTML = '<p class="text-red-600">No documents found for this query. This may indicate an issue with document indexing.</p>';
+                    return;
+                }
+                
+                // Add summary
+                const summary = document.createElement('div');
+                summary.className = 'mb-4 p-3 rounded-lg text-sm';
+                summary.style.backgroundColor = 'var(--light-brown)';
+                summary.style.color = 'var(--text-dark)';
+                summary.innerHTML = `<strong>Found ${data.results.length} document(s)</strong> for query: "${data.query}"`;
+                searchResultsContent.appendChild(summary);
+                
+                // Show results
+                data.results.forEach((result, index) => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'p-3 bg-white rounded-lg border border-gray-200';
+                    
+                    const distanceColor = result.distance < 0.3 ? 'var(--success-green)' : 
+                                        result.distance < 0.7 ? 'orange' : 'red';
+                    const relevance = result.distance < 0.3 ? 'High' : 
+                                    result.distance < 0.7 ? 'Medium' : 'Low';
+                    
+                    resultItem.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-sm font-medium">Document #${result.id}</span>
+                            <span class="text-xs px-2 py-1 rounded" style="background-color: ${distanceColor}; color: white;">
+                                ${relevance} (${result.distance.toFixed(3)})
+                            </span>
+                        </div>
+                        <div class="text-sm" style="color: var(--text-dark);">
+                            <strong>Preview:</strong> ${result.preview}...
+                        </div>
+                        <div class="text-xs mt-2" style="color: var(--warm-gray);">
+                            ${result.content_length} characters
+                        </div>
+                    `;
+                    searchResultsContent.appendChild(resultItem);
+                });
+                
+                // Add explanation
+                const explanation = document.createElement('div');
+                explanation.className = 'mt-4 p-3 rounded-lg text-xs';
+                explanation.style.backgroundColor = '#f3f4f6';
+                explanation.style.color = 'var(--text-dark)';
+                explanation.innerHTML = `
+                    <strong>Distance Score Explanation:</strong><br>
+                    • <span style="color: var(--success-green);">0.0-0.3</span>: High relevance (very similar)<br>
+                    • <span style="color: orange;">0.3-0.7</span>: Medium relevance (somewhat similar)<br>
+                    • <span style="color: red;">0.7+</span>: Low relevance (not very similar)
+                `;
+                searchResultsContent.appendChild(explanation);
+                
+            } catch (error) {
+                updateConnectionStatus('error');
+                searchResultsContent.innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Enhanced RAG Test Function
+        async function testEnhancedRAG() {
+            const searchInput = document.getElementById('enhanced-rag-test-input');
+            const searchResults = document.getElementById('search-results');
+            const searchResultsContent = document.getElementById('search-results-content');
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                alert('Please enter a question to test the enhanced RAG system');
+                return;
+            }
+            
+            try {
+                updateConnectionStatus('connecting');
+                searchResultsContent.innerHTML = '<p class="text-purple-600">🚀 Testing Enhanced RAG system...</p>';
+                searchResults.classList.remove('hidden');
+                
+                const response = await fetch('/api/test-enhanced-rag', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Enhanced RAG test failed');
+                }
+                
+                const data = await response.json();
+                updateConnectionStatus('connected');
+                
+                searchResultsContent.innerHTML = '';
+                
+                // Query Analysis Section
+                const analysisDiv = document.createElement('div');
+                analysisDiv.className = 'mb-6 p-4 rounded-lg';
+                analysisDiv.style.background = 'linear-gradient(135deg, #f3e8ff, #ede9fe)';
+                analysisDiv.innerHTML = `
+                    <h4 class="font-semibold mb-3 text-purple-800">🔍 Query Analysis</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div><strong>Original:</strong> ${data.query_analysis.original_query}</div>
+                        <div><strong>Student ID:</strong> ${data.query_analysis.student_id_detected || 'None detected'}</div>
+                        <div><strong>Search Type:</strong> ${data.query_analysis.search_type}</div>
+                        <div><strong>Structured:</strong> ${data.query_analysis.structured_query || 'N/A'}</div>
+                    </div>
+                    <div class="mt-3">
+                        <strong>Keywords:</strong> ${data.query_analysis.keywords.join(', ') || 'None'}
+                    </div>
+                    <div class="mt-2">
+                        <strong>Expanded Queries:</strong> ${data.query_analysis.expanded_queries.join(', ') || 'None'}
+                    </div>
+                `;
+                searchResultsContent.appendChild(analysisDiv);
+                
+                // Results Section
+                if (data.results.length === 0) {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'p-4 bg-red-50 border border-red-200 rounded-lg';
+                    noResults.innerHTML = '<p style="color: #f87171;">❌ No documents found. This indicates the enhanced RAG system needs more relevant data.</p>';
+                    searchResultsContent.appendChild(noResults);
+                    return;
+                }
+                
+                // Results Summary
+                const summary = document.createElement('div');
+                summary.className = 'mb-4 p-3 rounded-lg text-sm';
+                summary.style.backgroundColor = 'var(--light-brown)';
+                summary.style.color = 'var(--text-dark)';
+                summary.innerHTML = `<strong>✅ Found ${data.results.length} relevant document(s)</strong> using ${data.query_analysis.search_type} search`;
+                searchResultsContent.appendChild(summary);
+                
+                // Show Enhanced Results
+                data.results.forEach((result, index) => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'p-4 bg-white rounded-lg border border-gray-200 mb-3';
+                    
+                    const matchTypeColor = result.match_type === 'exact_match' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+                    const relevanceColor = result.relevance_score > 0.8 ? 'text-green-600' : result.relevance_score > 0.5 ? 'text-orange-600' : 'text-red-400';
+                    
+                    resultItem.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-sm font-medium px-3 py-1 rounded-full ${matchTypeColor}">
+                                    ${result.match_type === 'exact_match' ? '🎯 Exact Match' : '🧠 Semantic Match'}
+                                </span>
+                                <span class="text-sm font-medium ${relevanceColor}">
+                                    Score: ${(result.relevance_score * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
+                        
+                        ${result.metadata ? `
+                        <div class="mb-3 p-2 bg-gray-50 rounded text-xs">
+                            <strong>Metadata:</strong> 
+                            ${result.metadata.student_id ? `Student ID: ${result.metadata.student_id} | ` : ''}
+                            Type: ${result.metadata.type || 'unknown'} | 
+                            ${result.metadata.filename ? `File: ${result.metadata.filename}` : ''}
+                        </div>
+                        ` : ''}
+                        
+                        <div class="text-sm" style="color: var(--text-dark);">
+                            <strong>Content Preview:</strong><br>
+                            <div class="mt-2 p-2 bg-gray-50 rounded font-mono text-xs">
+                                ${result.content}
+                            </div>
+                        </div>
+                    `;
+                    searchResultsContent.appendChild(resultItem);
+                });
+                
+                // Enhanced Explanation
+                const explanation = document.createElement('div');
+                explanation.className = 'mt-4 p-4 rounded-lg text-sm';
+                explanation.style.backgroundColor = '#f0f9ff';
+                explanation.style.color = 'var(--text-dark)';
+                explanation.innerHTML = `
+                    <h5 class="font-semibold mb-2">🚀 Enhanced RAG Features Used:</h5>
+                    <div class="space-y-1">
+                        <div>• <strong>Query Processing:</strong> Extracted keywords and expanded variations</div>
+                        <div>• <strong>Hybrid Search:</strong> Combined exact matching with semantic similarity</div>
+                        <div>• <strong>Metadata Filtering:</strong> Used structured data for better targeting</div>
+                        <div>• <strong>Relevance Scoring:</strong> Prioritized exact matches over semantic matches</div>
+                    </div>
+                    <div class="mt-3 text-xs text-gray-600">
+                        Compare these results with the basic search above to see the improvement!
+                    </div>
+                `;
+                searchResultsContent.appendChild(explanation);
+                
+            } catch (error) {
+                updateConnectionStatus('error');
+                searchResultsContent.innerHTML = `<p class="text-red-600">Error testing enhanced RAG: ${error.message}</p>`;
+                console.error('Enhanced RAG test error:', error);
+            }
+        }
+        
+        function testDocumentQuery(docId, preview) {
+            const queryInput = document.getElementById('query-input');
+            const testQuery = `Tell me about the document that contains: "${preview.substring(0, 50)}"`;
+            
+            // Switch to Query tab
+            const queryTab = document.getElementById('tab-query');
+            queryTab.click();
+            
+            // Set the test query
+            queryInput.value = testQuery;
+            queryInput.focus();
+            
+            // Optionally auto-submit
+            if (confirm('Auto-submit this test query to see if the document is accessible?')) {
+                document.getElementById('submit-query').click();
+            }
+        }
+
+        // --- Handler Functions ---
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('file-name').textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('image-preview').src = e.target.result;
+                    document.getElementById('image-preview-container').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleEntrySubmit(students = []) {
+            const entryType = document.getElementById('entry-type-select').value;
+            
+            try {
+                if (entryType === 'student_note') {
+                    const studentName = document.getElementById('student-name-input').value;
+                    const noteText = document.getElementById('note-text').value;
+                    const fileInput = document.getElementById('file-input');
+                    let imageUrl = null;
+
+                    if (!studentName || !noteText) {
+                        alert('Student name and note text are required.');
+                        return;
+                    }
+
+                    let student = students.find(s => s.full_name === studentName);
+                    let studentId;
+
+                    if (!student) {
+                        // Create a new student
+                        const response = await fetch('/api/students', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                full_name: studentName,
+                                trade: 'Unknown', // Default trade
+                                enrollment_date: new Date().toISOString().split('T')[0],
+                                contact_info: {}
+                            })
+                        });
+                        if (response.ok) {
+                            const newStudent = await response.json();
+                            studentId = newStudent.student_id;
+                        } else {
+                            throw new Error('Failed to create new student');
+                        }
+                    } else {
+                        studentId = student.student_id;
+                    }
+                    
+                    if (fileInput && fileInput.files[0]) {
+                        const formData = new FormData();
+                        formData.append('image', fileInput.files[0]);
+                        
+                        const uploadResponse = await fetch('/api/upload/image', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const uploadData = await uploadResponse.json();
+                            imageUrl = uploadData.imageUrl;
+                        }
+                    }
+                    
+                    // Send the note data to the backend
+                    const noteResponse = await fetch('/api/student_notes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            student_id: studentId,
+                            note_text: noteText,
+                            image_url: imageUrl
+                        })
+                    });
+
+                    if (noteResponse.ok) {
+                        alert('Student note added successfully!');
+                        document.getElementById('student-name-input').value = '';
+                        document.getElementById('note-text').value = '';
+                        document.getElementById('file-input').value = '';
+                        document.getElementById('file-name').textContent = 'No file chosen';
+                        document.getElementById('image-preview-container').classList.add('hidden');
+                    } else {
+                        throw new Error('Failed to add student note');
+                    }
+                } else if (entryType === 'new_student') {
+                    const name = document.getElementById('student-name').value;
+                    const trade = document.getElementById('student-trade').value;
+                    
+                    const response = await fetch('/api/students', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            full_name: name,
+                            trade: trade,
+                            enrollment_date: new Date().toISOString().split('T')[0],
+                            contact_info: {}
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        alert('New student added successfully!');
+                        document.getElementById('student-name').value = '';
+                        document.getElementById('student-trade').value = '';
+                    } else {
+                        throw new Error('Failed to add student');
+                    }
+                } else {
+                    alert(`'${entryType}' entry submitted successfully! (Backend integration pending)`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function displayConversationHistory() {
+            const historyContainer = document.getElementById('conversation-history');
+            if (conversationHistory.length === 0) {
+                historyContainer.innerHTML = '';
+                return;
+            }
+            
+            historyContainer.innerHTML = `
+                <div class="bg-gray-50 p-4 rounded-xl">
+                    <h3 class="text-lg font-semibold mb-3">Conversation History</h3>
+                    <div class="space-y-3 max-h-96 overflow-y-auto">
+                        ${conversationHistory.map((item, index) => `
+                            <div class="bg-white p-3 rounded-lg shadow-sm">
+                                <div class="font-medium text-gray-700 mb-1">Q: ${item.query}</div>
+                                <div class="text-sm text-gray-600">A: ${item.response}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="clearHistory()" class="mt-3 text-sm text-red-600 hover:text-red-700">Clear History</button>
+                </div>
+            `;
+        }
+        
+        function clearHistory() {
+            conversationHistory = [];
+            saveConversationHistory();
+            displayConversationHistory();
+        }
+
+        async function handleQuerySubmit() {
+            const queryInput = document.getElementById('query-input');
+            const resultsOutput = document.getElementById('results-output');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            
+            const query = queryInput.value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+            
+            loadingSpinner.classList.remove('hidden');
+            resultsOutput.innerHTML = '';
+            resultsOutput.classList.add('hidden');
+            
+            try {
+                updateConnectionStatus('connecting');
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        query,
+                        conversationHistory: conversationHistory.slice(-5) // Send last 5 exchanges for context
+                    })
+                });
+                
+                if (!response.ok) {
+                    updateConnectionStatus('error');
+                    throw new Error('Query failed');
+                }
+                
+                const data = await response.json();
+                updateConnectionStatus('connected');
+                
+                loadingSpinner.classList.add('hidden');
+                resultsOutput.classList.remove('hidden');
+                
+                let responseText = '';
+                
+                if (data.error) {
+                    resultsOutput.innerHTML = `<p class="text-red-600 text-center">Error: ${data.error}</p>`;
+                    responseText = `Error: ${data.error}`;
+                } else if (data.type === 'general_answer') {
+                    // Display general answer
+                    resultsOutput.innerHTML = `<div class="p-4 bg-blue-50 border border-blue-200 rounded-lg"><p class="text-gray-800">${data.message}</p></div>`;
+                    responseText = data.message;
+                } else if (data.type === 'rag_answer') {
+                    // Display RAG-based answer
+                    resultsOutput.innerHTML = `<div class="p-4 bg-green-50 border border-green-200 rounded-lg"><p class="text-gray-800">${data.message}</p></div>`;
+                    responseText = data.message;
+                    
+                    // Check for chart suggestions with raw data
+                    checkAndCreateChart(data.message, query, data.rawContext);
+                } else if (data.length === 0) {
+                    resultsOutput.innerHTML = `<p class="text-gray-500 text-center">No results found for your query.</p>`;
+                    responseText = 'No results found';
+                } else {
+                    // Display results in a table
+                    const headers = Object.keys(data[0]);
+                    let tableHTML = `
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        ${headers.map(h => `<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${h}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${data.map(row => `
+                                        <tr>
+                                            ${headers.map(h => `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row[h] || '-'}</td>`).join('')}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    resultsOutput.innerHTML = tableHTML;
+                    responseText = `Found ${data.length} results`;
+                }
+                
+                lastResponse = responseText; // Update lastResponse for TTS
+                readResponseAloud(); // Automatically read the response
+                
+                // Add to conversation history
+                conversationHistory.push({
+                    query: query,
+                    response: responseText,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Save to sessionStorage and update display
+                saveConversationHistory();
+                queryInput.value = '';
+                displayConversationHistory();
+                
+            } catch (error) {
+                updateConnectionStatus('offline');
+                loadingSpinner.classList.add('hidden');
+                resultsOutput.classList.remove('hidden');
+                resultsOutput.innerHTML = `<p class="text-red-600 text-center">Error: ${error.message}</p>`;
+            }
+        }
+        
+        // --- Shared Styles ---
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .tab-button { 
+                padding: 12px 20px; 
+                font-weight: 600; 
+                color: #6B7280; 
+                background: transparent;
+                border: none;
+                border-radius: 10px;
+                margin: 0 4px;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+                min-width: 120px;
+                text-align: center;
+            }
+            .tab-button:hover { 
+                color: #374151; 
+                background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+            .tab-button.active-tab { 
+                color: #FFFFFF; 
+                background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+                box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+                transform: translateY(-1px);
+            }
+            .tab-button.active-tab:hover {
+                background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+                color: #FFFFFF;
+                transform: translateY(-1px);
+            }
+            .form-input { padding: 8px 12px; border: 1px solid #D1D5DB; border-radius: 0.5rem; transition: all 0.2s; }
+            .form-input:focus { ring: 2px; border-color: #2563EB; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4); }
+            .form-button-primary { background-color: #2563EB; color: white; font-weight: 600; padding: 10px 16px; border-radius: 0.5rem; transition: background-color 0.2s; }
+            .form-button-primary:hover { background-color: #1D4ED8; }
+            .form-button-secondary { background-color: #E5E7EB; color: #1F2937; font-weight: 600; padding: 8px 12px; border-radius: 0.5rem; transition: background-color 0.2s; }
+            .form-button-secondary:hover { background-color: #D1D5DB; }
+            .table-header { padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 500; color: #6B7280; text-transform: uppercase; letter-spacing: 0.05em; }
+            .table-cell { padding: 12px 16px; white-space: nowrap; font-size: 0.875rem; color: #374151; }
+        `;
+        document.head.appendChild(style);
+        
+        // Speech functionality variables
+        let recognition = null;
+        let isListening = false;
+        let lastResponse = '';
+        let conversationMode = false;
+        let awaitingResponse = false;
+        let wakeWordDetected = false;
+        let speechBuffer = '';
+        let wakeWordTimeout = null;
+        let queryInProgress = false;
+        
+        // Clear query function
+        function clearQuery() {
+            document.getElementById('query-input').value = '';
+        }
+        
+        // Update conversation status
+        function updateConversationStatus(message) {
+            const statusDiv = document.getElementById('conversation-status');
+            if (message) {
+                statusDiv.textContent = message;
+                statusDiv.classList.remove('hidden');
+            } else {
+                statusDiv.classList.add('hidden');
+            }
+        }
+        
+        // Conversation Mode Toggle
+        // Reset speech buffer state
+        function resetSpeechBuffer() {
+            if (wakeWordTimeout) {
+                clearTimeout(wakeWordTimeout);
+                wakeWordTimeout = null;
+            }
+            wakeWordDetected = false;
+            speechBuffer = '';
+        }
+        
+        function toggleConversationMode() {
+            conversationMode = !conversationMode;
+            const convBtn = document.getElementById('conversation-mode-btn');
+            const queryInput = document.getElementById('query-input');
+            
+            if (conversationMode) {
+                convBtn.innerHTML = `
+                    <span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">
+                        Listening <span id="press-to-stop" class="animate-pulse">(press to stop)</span>
+                    </span>
+                `;
+                convBtn.title = 'Stop Conversation Mode';
+                convBtn.style.background = 'linear-gradient(135deg, #f87171, #dc2626)';
+                convBtn.classList.add('listening-indicator');
+                
+                // Start conversation mode
+                queryInput.placeholder = 'Conversation mode active. Start talking...';
+                updateConversationStatus('🎧 Listening... (Natural voice enabled)');
+                alert('🎤 Conversation mode activated with natural voice.\n\nStart talking to have a conversation with lifelike speech, or "stop conversation" to end.');
+                resetSpeechBuffer(); // Reset buffer state
+                startConversationListening();
+            } else {
+                convBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">TALK</span>';
+                convBtn.title = 'Start Conversation Mode';
+                convBtn.style.background = 'linear-gradient(135deg, var(--primary-brown), var(--secondary-brown))';
+                convBtn.classList.remove('listening-indicator');
+                
+                // Stop conversation mode
+                queryInput.placeholder = "e.g., 'Which students need housing support?' or 'Show all donations from BuildCorp Inc.'";
+                updateConversationStatus('');
+                if (recognition) {
+                    recognition.stop();
+                }
+                resetSpeechBuffer(); // Reset buffer state
+                awaitingResponse = false;
+            }
+        }
+        
+        // Check microphone permissions and test audio input
+        async function checkMicrophonePermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Test audio levels briefly
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                const analyser = audioContext.createAnalyser();
+                source.connect(analyser);
+                
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                // Test for 2 seconds
+                let maxLevel = 0;
+                const testDuration = 2000;
+                const startTime = Date.now();
+                
+                const checkLevel = () => {
+                    analyser.getByteFrequencyData(dataArray);
+                    const level = Math.max(...dataArray);
+                    maxLevel = Math.max(maxLevel, level);
+                    
+                    if (Date.now() - startTime < testDuration) {
+                        requestAnimationFrame(checkLevel);
+                    } else {
+                        console.log(`🎤 Microphone test complete. Max audio level: ${maxLevel}/255`);
+                        if (maxLevel < 10) {
+                            console.warn('⚠️ Very low audio levels detected. Check microphone volume.');
+                        }
+                        // Clean up
+                        stream.getTracks().forEach(track => track.stop());
+                        audioContext.close();
+                    }
+                };
+                
+                console.log('🎤 Testing microphone levels for 2 seconds...');
+                checkLevel();
+                
+                console.log('✅ Microphone permission granted');
+                return true;
+            } catch (error) {
+                console.error('❌ Microphone access denied:', error);
+                return false;
+            }
+        }
+
+        // Continuous conversation listening
+        async function startConversationListening() {
+            if (!conversationMode) return;
+            
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+            
+            // Check microphone permission first
+            const hasMicPermission = await checkMicrophonePermission();
+            if (!hasMicPermission) {
+                alert('🎤 Microphone access is required for conversation mode. Please:\n\n1. Click the microphone icon in your browser address bar\n2. Select "Allow" for microphone access\n3. Try again');
+                toggleConversationMode(); // Turn off conversation mode
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            recognition.maxAlternatives = 1;
+            
+            // Visual indicator when speech recognition starts
+            recognition.onstart = function() {
+                console.log('🎤 Speech recognition started - AI is now listening');
+                const convBtn = document.getElementById('conversation-mode-btn');
+                const statusElement = document.getElementById('conversation-status');
+                
+                // Add more intense visual feedback
+                convBtn.classList.add('listening-indicator');
+                statusElement.classList.add('conversation-active');
+                updateConversationStatus('🎤 Actively listening... Speak now!');
+                
+                // Add a subtle background glow to the query area
+                const querySection = document.getElementById('query-section');
+                querySection.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.3)';
+            };
+            
+            recognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        transcript += event.results[i][0].transcript.toLowerCase();
+                    }
+                }
+                
+                // Skip empty transcripts
+                if (!transcript.trim()) {
+                    return;
+                }
+                
+                // Debug logging
+                console.log('🎤 Heard:', `"${transcript}"`);
+                
+                // Directly process the transcript, bypassing wake word checks
+                handleConversationQuery(transcript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Conversation mode error:', event.error);
+                
+                switch(event.error) {
+                    case 'no-speech':
+                        console.log('🔇 No speech detected, continuing to listen...');
+                        updateConversationStatus('🎧 Waiting for speech... (Try speaking louder or closer to mic)');
+                        // Continue listening for no-speech errors
+                        break;
+                    case 'not-allowed':
+                        alert('🎤 Microphone access denied. Please allow microphone access and try again.');
+                        toggleConversationMode();
+                        break;
+                    case 'network':
+                        console.error('Network error in speech recognition');
+                        updateConversationStatus('❌ Network error - checking connection...');
+                        setTimeout(() => {
+                            if (conversationMode) {
+                                startConversationListening();
+                            }
+                        }, 2000);
+                        break;
+                    default:
+                        console.error('Other speech recognition error:', event.error);
+                        setTimeout(() => {
+                            if (conversationMode) {
+                                startConversationListening();
+                            }
+                        }, 1000);
+                }
+            };
+            
+            recognition.onend = function() {
+                console.log('🔇 Speech recognition stopped');
+                
+                // Process any remaining buffered speech before stopping
+                if (wakeWordDetected && speechBuffer.trim()) {
+                    console.log('🔄 Processing remaining buffered speech before restart');
+                    processSpeechBuffer();
+                }
+                
+                const convBtn = document.getElementById('conversation-mode-btn');
+                const statusElement = document.getElementById('conversation-status');
+                const querySection = document.getElementById('query-section');
+                
+                // Remove intense visual feedback temporarily
+                convBtn.classList.remove('listening-indicator');
+                statusElement.classList.remove('conversation-active');
+                querySection.style.boxShadow = '';
+                
+                // Show brief pause status
+                updateConversationStatus('⏸️ Paused - Restarting in a moment...');
+                
+                // Restart listening in conversation mode
+                if (conversationMode) {
+                    setTimeout(() => {
+                        updateConversationStatus('🎧 Listening...');
+                        startConversationListening();
+                    }, 500);
+                }
+            };
+            
+            recognition.start();
+        }
+        
+        // Process collected speech buffer
+        function processSpeechBuffer() {
+            console.log('🔄 Processing speech buffer:', speechBuffer);
+            
+            // Clear timeout
+            if (wakeWordTimeout) {
+                clearTimeout(wakeWordTimeout);
+                wakeWordTimeout = null;
+            }
+            
+            // Process the buffered speech
+            if (speechBuffer.trim()) {
+                handleConversationQuery(speechBuffer);
+            }
+            
+            // Reset buffer state
+            wakeWordDetected = false;
+            speechBuffer = '';
+        }
+        
+        // Handle conversation queries
+        function handleConversationQuery(transcript) {
+            console.log('🎯 handleConversationQuery called with:', transcript);
+            
+            // Check if a query is already in progress
+            if (queryInProgress) {
+                console.log('⏸️ Query already in progress, ignoring duplicate request');
+                return;
+            }
+            
+            // Directly use the transcript as the query
+            const cleanQuery = transcript.trim();
+            
+            console.log('🧹 Cleaned query:', cleanQuery);
+            
+            if (cleanQuery.length > 0) {
+                document.getElementById('query-input').value = cleanQuery;
+                awaitingResponse = true;
+                queryInProgress = true;
+                updateConversationStatus('🤔 Processing your question...');
+                
+                console.log('🚀 Submitting query to AI...');
+                // Auto-submit the query
+                handleQuerySubmit().then(() => {
+                    console.log('✅ Query completed successfully');
+                    // Don't call readResponseAloud here - handleQuerySubmit already does it
+                    awaitingResponse = false;
+                    queryInProgress = false;
+                    updateConversationStatus('🎧 Listening for your next question...');
+                }).catch(error => {
+                    console.error('❌ Query failed:', error);
+                    updateConversationStatus('❌ Sorry, I had trouble processing that. Try again.');
+                    awaitingResponse = false;
+                    queryInProgress = false;
+                });
+            } else {
+                console.log('⚠️ No query content after cleaning wake words');
+                updateConversationStatus('🎧 Listening for "Hey GeGi"...');
+            }
+        }
+        
+        async function readResponseAloud() {
+            const resultsOutput = document.getElementById('results-output');
+            let textToRead = lastResponse || resultsOutput.innerText;
+            
+            if (!textToRead || textToRead.trim() === 'Results will appear here...') {
+                alert('There is no response to read aloud.');
+                return;
+            }
+
+            // Correct the pronunciation of "GeGi" to "Jee Jee" for TTS only
+            textToRead = textToRead.replace(/GeGi/g, 'Jee Jee');
+
+            const ttsBtn = document.getElementById('text-to-speech-btn');
+            const voiceSelector = document.getElementById('voice-selector');
+            
+            // Get the current voice selection fresh every time
+            const selectedVoiceValue = voiceSelector.value;
+
+            if (!selectedVoiceValue) {
+                alert("Please select a voice first.");
+                return;
+            }
+
+            const selectedVoice = JSON.parse(selectedVoiceValue);
+
+            try {
+                ttsBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">...</span>';
+                ttsBtn.title = 'Generating audio...';
+                
+                const response = await fetch('/api/natural-tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        text: textToRead, 
+                        voice: selectedVoice.id,
+                        provider: selectedVoice.provider
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (currentAudio) {
+                        currentAudio.pause();
+                    }
+                    currentAudio = new Audio(data.audioUrl);
+                    currentAudio.play();
+                    
+                    ttsBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">STOP</span>';
+                    ttsBtn.title = 'Stop Speaking';
+                    
+                    currentAudio.onended = () => {
+                        ttsBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">🔊</span>';
+                        ttsBtn.title = 'Read Response Aloud';
+                    };
+                } else {
+                    // Fallback to browser's built-in speech synthesis
+                    console.warn('Natural TTS failed, using browser fallback:', data.message);
+                    fallbackSpeechSynthesis(textToRead);
+                }
+            } catch (error) {
+                console.error('Error with natural TTS:', error);
+                fallbackSpeechSynthesis(textToRead);
+            }
+        }
+
+        function fallbackSpeechSynthesis(text) {
+            const ttsBtn = document.getElementById('text-to-speech-btn');
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                ttsBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">🔊</span>';
+                return;
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.onstart = () => {
+                ttsBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">STOP</span>';
+            };
+            utterance.onend = () => {
+                ttsBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">🔊</span>';
+            };
+            speechSynthesis.speak(utterance);
+        }
+
+        // Stop GeGi from speaking
+        // Global audio element for natural TTS
+        let currentAudio = null;
+        
+        function stopGeGiSpeaking() {
+            console.log('🛑 Stopping GeGi speech...');
+            
+            // Stop natural TTS audio
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+                console.log('🔇 Natural audio stopped');
+            }
+            
+            // Cancel any ongoing browser speech synthesis
+            speechSynthesis.cancel();
+            console.log('🔇 Browser TTS stopped');
+            
+            // Reset the text-to-speech button state
+            const ttsBtn = document.getElementById('text-to-speech-btn');
+            if (ttsBtn) {
+                ttsBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">🔊</span>';
+                ttsBtn.title = 'Read Response Aloud';
+            }
+            
+            // Update conversation status
+            updateConversationStatus('🔇 Speech stopped. Listening for "Hey GeGi"...');
+            
+            // Reset awaiting response state
+            awaitingResponse = false;
+        }
+        
+        // Speech-to-Text functionality
+        function startSpeechToText() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            recognition.maxAlternatives = 1;
+            
+            const speechBtn = document.getElementById('speech-to-text-btn');
+            const queryInput = document.getElementById('query-input');
+            
+            recognition.onstart = function() {
+                console.log('🎤 Microphone started - AI is listening');
+                isListening = true;
+                speechBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">STOP</span>';
+                speechBtn.title = 'Listening... Click to stop';
+                speechBtn.classList.add('mic-active');
+                speechBtn.style.background = 'linear-gradient(135deg, #f87171, #dc2626)';
+                queryInput.placeholder = 'Listening... Speak clearly and close to your microphone...';
+                
+                // Add glow to query area
+                const querySection = document.getElementById('query-section');
+                querySection.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.3)';
+            };
+            
+            recognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        transcript += event.results[i][0].transcript;
+                    } else {
+                        // Show interim results
+                        transcript += event.results[i][0].transcript;
+                    }
+                }
+                queryInput.value = transcript;
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                let errorMessage = '';
+                switch(event.error) {
+                    case 'no-speech':
+                        errorMessage = 'No speech detected. Please speak clearly into your microphone and try again.';
+                        break;
+                    case 'audio-capture':
+                        errorMessage = 'Microphone not accessible. Please check your microphone permissions.';
+                        break;
+                    case 'not-allowed':
+                        errorMessage = 'Microphone access denied. Please allow microphone access and try again.';
+                        break;
+                    case 'network':
+                        errorMessage = 'Network error. Please check your internet connection.';
+                        break;
+                    default:
+                        errorMessage = 'Speech recognition error: ' + event.error;
+                }
+                alert(errorMessage);
+                resetSpeechButton();
+            };
+            
+            recognition.onend = function() {
+                resetSpeechButton();
+            };
+            
+            if (isListening) {
+                recognition.stop();
+                resetSpeechButton();
+            } else {
+                // Check microphone permission first
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ audio: true })
+                        .then(function(stream) {
+                            // Permission granted, start recognition
+                            stream.getTracks().forEach(track => track.stop());
+                            recognition.start();
+                        })
+                        .catch(function(err) {
+                            alert('Microphone access required. Please allow microphone access and try again.');
+                            console.error('Microphone access error:', err);
+                        });
+                } else {
+                    // Fallback for older browsers
+                    recognition.start();
+                }
+            }
+        }
+        
+        function resetSpeechButton() {
+            console.log('🔇 Microphone stopped');
+            isListening = false;
+            const speechBtn = document.getElementById('speech-to-text-btn');
+            const queryInput = document.getElementById('query-input');
+            const querySection = document.getElementById('query-section');
+            
+            // Reset button appearance
+            speechBtn.innerHTML = '<span class="text-xs font-semibold tracking-wide uppercase group-hover:scale-105 transition-transform duration-300">MIC</span>';
+            speechBtn.title = 'Speech to Text';
+            speechBtn.classList.remove('mic-active');
+            speechBtn.style.background = 'linear-gradient(135deg, var(--accent-neutral), var(--warm-gray))';
+            
+            // Reset input and query area
+            queryInput.placeholder = "e.g., 'Which students need housing support?' or 'Show all donations from BuildCorp Inc.'";
+            querySection.style.boxShadow = '';
+        }
+
+        // Speech-to-Text for Form Fields
+        function startSpeechForField(targetFieldId) {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Speech recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const fieldRecognition = new SpeechRecognition();
+            
+            fieldRecognition.continuous = false;
+            fieldRecognition.interimResults = true;
+            fieldRecognition.lang = 'en-US';
+            fieldRecognition.maxAlternatives = 1;
+            
+            const targetField = document.getElementById(targetFieldId);
+            const speechBtn = document.querySelector(`[onclick*="${targetFieldId}"], [id*="${targetFieldId.replace('-', '-')}"][id*="speech"]`);
+            
+            // Find the correct speech button for this field
+            let correctSpeechBtn = null;
+            if (targetFieldId === 'student-name-input') correctSpeechBtn = document.getElementById('student-name-speech-btn');
+            else if (targetFieldId === 'note-text' && document.getElementById('note-speech-btn')) correctSpeechBtn = document.getElementById('note-speech-btn');
+            else if (targetFieldId === 'note-text' && document.getElementById('staff-note-speech-btn')) correctSpeechBtn = document.getElementById('staff-note-speech-btn');
+            else if (targetFieldId === 'student-name') correctSpeechBtn = document.getElementById('new-student-name-speech-btn');
+            else if (targetFieldId === 'student-trade') correctSpeechBtn = document.getElementById('student-trade-speech-btn');
+            
+            if (!targetField) {
+                console.error('Target field not found:', targetFieldId);
+                return;
+            }
+            
+            fieldRecognition.onstart = function() {
+                if (correctSpeechBtn) {
+                    correctSpeechBtn.innerHTML = '<span class="text-sm" style="color: #f87171;">🔴</span>';
+                    correctSpeechBtn.title = 'Listening... Click to stop';
+                }
+                targetField.placeholder = 'Listening... Speak clearly...';
+            };
+            
+            fieldRecognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        transcript += event.results[i][0].transcript;
+                    } else {
+                        transcript += event.results[i][0].transcript;
+                    }
+                }
+                targetField.value = transcript;
+            };
+            
+            fieldRecognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                let errorMessage = '';
+                switch(event.error) {
+                    case 'no-speech':
+                        errorMessage = 'No speech detected. Please speak clearly and try again.';
+                        break;
+                    case 'audio-capture':
+                        errorMessage = 'Microphone not accessible. Please check your microphone permissions.';
+                        break;
+                    case 'not-allowed':
+                        errorMessage = 'Microphone access denied. Please allow microphone access and try again.';
+                        break;
+                    case 'network':
+                        errorMessage = 'Network error. Please check your internet connection.';
+                        break;
+                    default:
+                        errorMessage = 'Speech recognition error: ' + event.error;
+                }
+                alert(errorMessage);
+                resetFieldSpeechButton(targetFieldId, correctSpeechBtn);
+            };
+            
+            fieldRecognition.onend = function() {
+                resetFieldSpeechButton(targetFieldId, correctSpeechBtn);
+            };
+            
+            // Check microphone permission first
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function(stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                        fieldRecognition.start();
+                    })
+                    .catch(function(err) {
+                        alert('Microphone access required. Please allow microphone access and try again.');
+                        console.error('Microphone access error:', err);
+                    });
+            } else {
+                fieldRecognition.start();
+            }
+        }
+        
+        function resetFieldSpeechButton(targetFieldId, speechBtn) {
+            const targetField = document.getElementById(targetFieldId);
+            
+            if (speechBtn) {
+                speechBtn.innerHTML = '<span class="text-sm group-hover:scale-110 transition-transform duration-200">🎤</span>';
+                speechBtn.title = 'Speech to Text';
+            }
+            
+            if (targetField) {
+                // Reset placeholder based on field type
+                if (targetFieldId === 'student-name-input') {
+                    targetField.placeholder = 'Type or select a student';
+                } else if (targetFieldId === 'note-text') {
+                    targetField.placeholder = targetField.placeholder.includes('staff') ? 'Enter a note about a staff member...' : 'Enter a note...';
+                } else if (targetFieldId === 'student-name') {
+                    targetField.placeholder = '';
+                } else if (targetFieldId === 'student-trade') {
+                    targetField.placeholder = '';
+                }
+            }
+        }
+        
+        // Chart generation variables
+        let currentChart = null;
+        
+        // Check for chart suggestions and create charts
+        function checkAndCreateChart(responseText, query, rawContext) {
+            const chartMatch = responseText.match(/CHART_SUGGESTION:\s*([^|]+)\|([^|]+)\|([^|]+)/);
+            
+            if (chartMatch) {
+                const [, chartType, title, description] = chartMatch;
+                console.log('📊 Chart suggestion found, using real data from context');
+                generateChart(chartType.trim(), title.trim(), description.trim(), query, rawContext);
+            }
+        }
+        
+        // Generate chart based on type and data
+        function generateChart(type, title, description, query, rawContext) {
+            const chartContainer = document.getElementById('chart-container');
+            const canvas = document.getElementById('data-chart');
+            const ctx = canvas.getContext('2d');
+            
+            // Destroy existing chart
+            if (currentChart) {
+                currentChart.destroy();
+            }
+            
+            // Show chart container
+            chartContainer.classList.remove('hidden');
+            
+            // Generate chart data based on actual database results
+            console.log('📊 Generating chart:', { type, title, description, query });
+            console.log('📊 Raw context data:', rawContext);
+            const chartData = generateChartData(query, type, title, rawContext);
+            
+            const config = {
+                type: type,
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title,
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            display: type !== 'pie'
+                        }
+                    },
+                    scales: type !== 'pie' && type !== 'radar' ? {
+                        x: {
+                            title: {
+                                display: true,
+                                text: getXAxisLabel(query, type),
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: getYAxisLabel(query, type),
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        }
+                    } : {}
+                }
+            };
+            
+            currentChart = new Chart(ctx, config);
+            
+            // Add download functionality
+            document.getElementById('download-chart').onclick = function() {
+                const link = document.createElement('a');
+                link.download = title.replace(/\s+/g, '_').toLowerCase() + '.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            };
+            
+            // Add chart verification functionality using Gemma3n
+            document.getElementById('verify-chart').onclick = function() {
+                verifyChartWithGemma3n(canvas, title, query, rawContext);
+            };
+        }
+        
+        // Chart verification using Gemma3n image analysis
+        async function verifyChartWithGemma3n(canvas, title, query, rawContext) {
+            if (!canvas || !currentChart) {
+                alert('No chart to verify. Please generate a chart first.');
+                return;
+            }
+            
+            try {
+                // Update button to show loading state
+                const verifyBtn = document.getElementById('verify-chart');
+                const originalContent = verifyBtn.innerHTML;
+                verifyBtn.innerHTML = '<span class="flex items-center space-x-2"><svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Analyzing...</span></span>';
+                verifyBtn.disabled = true;
+                
+                // Convert canvas to blob
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('chart', blob, 'chart.png');
+                    formData.append('expectedData', JSON.stringify({
+                        query: query,
+                        title: title,
+                        rawContext: rawContext?.substring(0, 1000) // Limit context size
+                    }));
+                    formData.append('chartDescription', `Chart titled "${title}" generated from query: "${query}"`);
+                    
+                    try {
+                        const response = await fetch('/api/verify-chart', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            showChartVerificationResult(result.analysis, title);
+                        } else {
+                            if (result.fallback) {
+                                alert(`Chart verification not available: ${result.error}\n\n${result.fallback}`);
+                            } else {
+                                alert(`Error verifying chart: ${result.error}`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Chart verification error:', error);
+                        alert('Failed to verify chart. Please try again.');
+                    } finally {
+                        // Reset button
+                        verifyBtn.innerHTML = originalContent;
+                        verifyBtn.disabled = false;
+                    }
+                }, 'image/png');
+                
+            } catch (error) {
+                console.error('Error preparing chart for verification:', error);
+                alert('Failed to prepare chart for verification.');
+                
+                // Reset button
+                const verifyBtn = document.getElementById('verify-chart');
+                verifyBtn.innerHTML = originalContent;
+                verifyBtn.disabled = false;
+            }
+        }
+        
+        // Display chart verification results
+        function showChartVerificationResult(analysis, chartTitle) {
+            const resultsOutput = document.getElementById('results-output');
+            
+            const verificationHTML = `
+                <div class="glass-panel p-6 mt-4 border-l-4" style="border-left-color: var(--primary-brown);">
+                    <h4 class="text-lg font-semibold mb-3 flex items-center" style="color: var(--text-dark);">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Chart Verification Results for "${chartTitle}"
+                    </h4>
+                    <div class="bg-white bg-opacity-50 rounded-lg p-4">
+                        <pre class="whitespace-pre-wrap text-sm" style="color: var(--text-dark);">${analysis}</pre>
+                    </div>
+                    <div class="mt-3 text-xs" style="color: var(--secondary-brown);">
+                        ✨ Analysis powered by Gemma3n multimodal AI
+                    </div>
+                </div>
+            `;
+            
+            // Append verification results to existing content
+            const currentContent = resultsOutput.innerHTML;
+            if (currentContent.includes('Results will appear here...')) {
+                resultsOutput.innerHTML = verificationHTML;
+            } else {
+                resultsOutput.innerHTML = currentContent + verificationHTML;
+            }
+            
+            // Scroll to results
+            resultsOutput.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // RAG Document Management Functions
+        async function viewRAGDocuments() {
+            const statusDiv = document.getElementById('rag-status');
+            statusDiv.textContent = '🔄 Loading documents...';
+            
+            try {
+                const response = await fetch('/api/documents');
+                const data = await response.json();
+                
+                if (data.documents) {
+                    let documentList = `📊 Total documents: ${data.total_documents}\n\n`;
+                    
+                    data.documents.forEach((doc, index) => {
+                        documentList += `${index + 1}. [ID: ${doc.id}] ${doc.document_type}\n`;
+                        documentList += `   Preview: ${doc.preview}...\n`;
+                        documentList += `   Size: ${doc.content_length} characters\n\n`;
+                    });
+                    
+                    // Show in a scrollable dialog
+                    const modal = document.createElement('div');
+                    modal.style.cssText = `
+                        position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+                        background: rgba(0,0,0,0.5); z-index: 1000; 
+                        display: flex; align-items: center; justify-content: center; padding: 20px;
+                    `;
+                    
+                    // Create interactive document list with delete buttons
+                    let documentHTML = `
+                        <div style="background: white; border-radius: 12px; padding: 20px; max-width: 900px; max-height: 80vh; overflow-y: auto;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0; color: var(--text-dark);">📄 RAG Documents (${data.total_documents} total)</h3>
+                                <button onclick="this.closest('.modal').remove()" style="background: var(--primary-brown); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Close</button>
+                            </div>
+                            <div style="max-height: 60vh; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px;">
+                    `;
+                    
+                    data.documents.forEach((doc, index) => {
+                        documentHTML += `
+                            <div style="border-bottom: 1px solid #f3f4f6; padding: 12px 0; display: flex; justify-content: space-between; align-items: start;" data-doc-id="${doc.id}">
+                                <div style="flex: 1; margin-right: 15px;">
+                                    <div style="font-weight: bold; color: var(--text-dark); margin-bottom: 4px;">
+                                        ${index + 1}. [ID: ${doc.id}] ${doc.document_type}
+                                    </div>
+                                    <div style="font-size: 11px; color: #6b7280; line-height: 1.3; margin-bottom: 4px;">
+                                        ${doc.preview}...
+                                    </div>
+                                    <div style="font-size: 10px; color: #9ca3af;">
+                                        Size: ${doc.content_length} characters
+                                    </div>
+                                </div>
+                                <button 
+                                    onclick="deleteRAGDocument(${doc.id}, this)" 
+                                    style="background: linear-gradient(135deg, #f87171, #dc2626); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; flex-shrink: 0;"
+                                    title="Delete this document">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        `;
+                    });
+                    
+                    documentHTML += `
+                            </div>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb; text-align: center;">
+                                <button 
+                                    onclick="if(confirm('⚠️ Delete ALL documents?\\n\\nThis cannot be undone!')) { clearRAGDocuments(); this.closest('.modal').remove(); }" 
+                                    style="background: linear-gradient(135deg, #f87171, #dc2626); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px;">
+                                    🗑️ Delete All Documents
+                                </button>
+                                <span style="font-size: 11px; color: #6b7280;">Use individual delete buttons above to remove specific documents</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    modal.innerHTML = documentHTML;
+                    modal.className = 'modal';
+                    document.body.appendChild(modal);
+                    
+                    statusDiv.textContent = `📄 Found ${data.total_documents} documents in RAG system`;
+                } else {
+                    statusDiv.textContent = '❌ No documents found';
+                }
+            } catch (error) {
+                console.error('Error viewing documents:', error);
+                statusDiv.textContent = '❌ Failed to load documents';
+            }
+        }
+        
+        // Delete individual RAG document - make it globally accessible
+        window.deleteRAGDocument = async function(documentId, buttonElement) {
+            const confirmed = confirm(`🗑️ Delete Document ID: ${documentId}?\n\nThis will permanently remove this document from GeGi's knowledge base.\n\nProceed?`);
+            
+            if (!confirmed) return;
+            
+            // Update button state
+            const originalText = buttonElement.innerHTML;
+            buttonElement.innerHTML = '⏳ Deleting...';
+            buttonElement.disabled = true;
+            
+            try {
+                const response = await fetch(`/api/documents/${documentId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Remove the document row from UI
+                    const documentRow = buttonElement.closest('[data-doc-id]');
+                    documentRow.style.background = '#fef2f2';
+                    documentRow.style.transition = 'all 0.3s ease';
+                    
+                    setTimeout(() => {
+                        documentRow.remove();
+                        
+                        // Update document count in header
+                        const modal = buttonElement.closest('.modal');
+                        const header = modal.querySelector('h3');
+                        const currentCount = modal.querySelectorAll('[data-doc-id]').length;
+                        header.textContent = `📄 RAG Documents (${currentCount} total)`;
+                        
+                        // Show success message
+                        const statusDiv = document.getElementById('rag-status');
+                        statusDiv.textContent = `✅ Document ${documentId} deleted successfully`;
+                    }, 300);
+                    
+                } else {
+                    buttonElement.innerHTML = originalText;
+                    buttonElement.disabled = false;
+                    alert(`❌ Failed to delete document: ${result.error}`);
+                }
+                
+            } catch (error) {
+                console.error('Error deleting document:', error);
+                buttonElement.innerHTML = originalText;
+                buttonElement.disabled = false;
+                alert('❌ Failed to delete document. Please try again.');
+            }
+        };
+        
+        async function clearRAGDocuments() {
+            const confirmed = confirm('⚠️ Are you sure you want to delete ALL documents from the RAG system?\n\nThis will remove all uploaded student data, notes, and documents that GeGi uses to answer questions.\n\nThis action cannot be undone.');
+            
+            if (!confirmed) return;
+            
+            const doubleConfirm = confirm('🚨 FINAL CONFIRMATION\n\nThis will permanently delete all RAG data. GeGi will not be able to answer questions about students until new documents are uploaded.\n\nProceed with deletion?');
+            
+            if (!doubleConfirm) return;
+            
+            // Additional security layer - require typing DELETE
+            const deleteConfirmation = prompt('🔐 SECURITY CONFIRMATION\n\nTo proceed with permanently deleting ALL RAG data, type DELETE (in all capital letters) below:');
+            
+            if (deleteConfirmation !== 'DELETE') {
+                alert('❌ Deletion cancelled. You must type DELETE exactly as shown.');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('rag-status');
+            statusDiv.textContent = '🗑️ Clearing all RAG documents...';
+            
+            try {
+                const response = await fetch('/api/documents', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ confirm: 'DELETE_ALL' })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusDiv.textContent = `✅ ${result.message}`;
+                    alert(`🗑️ Success!\n\n${result.message}\n\nGeGi's knowledge has been cleared. Upload new documents to restore functionality.`);
+                } else {
+                    statusDiv.textContent = `❌ ${result.error}`;
+                }
+            } catch (error) {
+                console.error('Error clearing documents:', error);
+                statusDiv.textContent = '❌ Failed to clear documents';
+            }
+        }
+        
+        // Test ElevenLabs API connection
+        async function testElevenLabs() {
+            const statusDiv = document.getElementById('rag-status');
+            statusDiv.textContent = '🔄 Testing ElevenLabs connection...';
+            
+            try {
+                const response = await fetch('/api/test-elevenlabs');
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusDiv.textContent = `✅ ${result.message} (${result.available_voices} voices available)`;
+                    
+                    if (result.voices && result.voices.length > 0) {
+                        const voiceList = result.voices.map(v => `${v.name} (${v.id})`).join(', ');
+                        alert(`🎤 ElevenLabs Connected Successfully!\n\nAvailable voices: ${voiceList}\n\nNatural voice synthesis is working!`);
+                    }
+                } else {
+                    statusDiv.textContent = `❌ ElevenLabs failed: ${result.error}`;
+                    
+                    let errorMessage = `❌ ElevenLabs Connection Failed\n\nError: ${result.error}`;
+                    
+                    if (result.status === 401) {
+                        errorMessage += '\n\n🔑 This usually means:\n- Invalid API key\n- API key not set in .env file\n- API key expired';
+                    } else if (result.status === 429) {
+                        errorMessage += '\n\n⏳ Rate limited - too many requests';
+                    } else if (result.details) {
+                        errorMessage += `\n\nDetails: ${result.details}`;
+                    }
+                    
+                    alert(errorMessage);
+                }
+            } catch (error) {
+                console.error('ElevenLabs test error:', error);
+                statusDiv.textContent = '❌ Network error testing ElevenLabs';
+                alert('❌ Network error testing ElevenLabs connection');
+            }
+        }
+        
+        // Test speech synthesis with a short phrase
+        async function testSpeech() {
+            const voiceSelector = document.getElementById('voice-selector');
+            const selectedVoiceValue = voiceSelector.value;
+
+            if (!selectedVoiceValue) {
+                alert("Please select a voice first.");
+                return;
+            }
+
+            const selectedVoice = JSON.parse(selectedVoiceValue);
+            const testText = `This is a test of the ${selectedVoice.provider} voice. My name is Jee Jee.`;
+
+            try {
+                const response = await fetch('/api/natural-tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: testText,
+                        voice: selectedVoice.id,
+                        provider: selectedVoice.provider
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (currentAudio) {
+                        currentAudio.pause();
+                    }
+                    currentAudio = new Audio(data.audioUrl);
+                    currentAudio.play();
+                } else {
+                    alert('Failed to generate test speech. Check the console for details.');
+                    console.error('TTS Error:', data.message);
+                }
+            } catch (error) {
+                alert('An error occurred while testing the voice. Check the console.');
+                console.error('Test Speech Error:', error);
+            }
+        }
+        
+        // Generate chart data based on query content
+        // Helper functions for axis labels
+        function getXAxisLabel(query, type) {
+            const lowerQuery = query.toLowerCase();
+            if (lowerQuery.includes('student') && lowerQuery.includes('attendance')) return 'Students';
+            if (lowerQuery.includes('quiz') || lowerQuery.includes('score')) return 'Quizzes/Tests';
+            if (lowerQuery.includes('time') || lowerQuery.includes('date')) return 'Time Period';
+            if (lowerQuery.includes('grade')) return 'Grade Levels';
+            return 'Categories';
+        }
+        
+        function getYAxisLabel(query, type) {
+            const lowerQuery = query.toLowerCase();
+            if (lowerQuery.includes('attendance')) return 'Attendance %';
+            if (lowerQuery.includes('score') || lowerQuery.includes('grade')) return 'Score %';
+            if (lowerQuery.includes('count') || lowerQuery.includes('number')) return 'Count';
+            if (lowerQuery.includes('average')) return 'Average Score';
+            return 'Values';
+        }
+        
+        // Parse real data from RAG context
+        function parseDataFromContext(rawContext, query) {
+            console.log('🔍 Parsing context data:', rawContext.substring(0, 500) + '...');
+            
+            try {
+                // Look for student data patterns in the context
+                const students = [];
+                const attendanceData = [];
+                const scoreData = [];
+                
+                // Split context into lines for parsing
+                const lines = rawContext.split('\n');
+                
+                for (let line of lines) {
+                    // Parse student records
+                    if (line.includes('Student ID:') || line.includes('student_id')) {
+                        const studentIdMatch = line.match(/(?:Student ID:|student_id.*?)(\d+)/i);
+                        if (studentIdMatch) {
+                            const studentId = studentIdMatch[1];
+                            let studentData = { id: studentId };
+                            
+                            // Look for attendance in the same context
+                            const attendanceMatch = rawContext.match(new RegExp(`${studentId}[\\s\\S]*?(?:Attendance|attendance).*?(\\d+)%?`, 'i'));
+                            if (attendanceMatch) {
+                                studentData.attendance = parseInt(attendanceMatch[1]);
+                            }
+                            
+                            // Look for scores
+                            const scoreMatch = rawContext.match(new RegExp(`${studentId}[\\s\\S]*?(?:score|Score).*?(\\d+)`, 'i'));
+                            if (scoreMatch) {
+                                studentData.score = parseInt(scoreMatch[1]);
+                            }
+                            
+                            // Only add if we have meaningful data
+                            if (studentData.attendance || studentData.score) {
+                                students.push(studentData);
+                            }
+                        }
+                    }
+                }
+                
+                console.log('📊 Parsed student data:', students);
+                
+                // Create chart data based on what we found
+                if (students.length > 0) {
+                    const labels = students.map(s => `Student ${s.id}`);
+                    
+                    if (query.includes('attendance') && students.some(s => s.attendance)) {
+                        const data = students.map(s => s.attendance || 0);
+                        return {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Attendance %',
+                                data: data,
+                                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                borderWidth: 2
+                            }]
+                        };
+                    } else if (query.includes('score') && students.some(s => s.score)) {
+                        const data = students.map(s => s.score || 0);
+                        return {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Test Scores',
+                                data: data,
+                                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 2
+                            }]
+                        };
+                    }
+                }
+                
+                return null; // Fall back to sample data
+            } catch (error) {
+                console.error('❌ Error parsing context data:', error);
+                return null;
+            }
+        }
+        
+        function generateChartData(query, type, title, rawContext) {
+            const lowerQuery = query.toLowerCase();
+            console.log('📊 Creating chart data for query:', lowerQuery);
+            
+            // Parse real data from rawContext if available
+            if (rawContext) {
+                console.log('📊 Parsing real data from context...');
+                const realData = parseDataFromContext(rawContext, lowerQuery);
+                if (realData) {
+                    console.log('✅ Using real data for chart:', realData);
+                    return realData;
+                }
+            }
+            
+            // Student attendance data
+            if (lowerQuery.includes('attendance') && lowerQuery.includes('student')) {
+                const students = ['Student 1001', 'Student 1002', 'Student 1003', 'Student 1004', 'Student 1005'];
+                const attendanceData = [95, 87, 92, 78, 89]; // Sample attendance percentages
+                
+                return {
+                    labels: students,
+                    datasets: [{
+                        label: 'Attendance %',
+                        data: attendanceData,
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(153, 102, 255, 0.8)',
+                            'rgba(255, 99, 132, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                };
+            }
+            
+            // Jane's quiz scores
+            if (lowerQuery.includes('jane')) {
+                if (type === 'bar') {
+                    return {
+                        labels: ['JavaScript Quiz', 'HTML/CSS Quiz', 'Database Quiz', 'Python Quiz'],
+                        datasets: [{
+                            label: 'Quiz Scores (%)',
+                            data: [85, 92, 78, 88],
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.8)',
+                                'rgba(75, 192, 192, 0.8)', 
+                                'rgba(255, 206, 86, 0.8)',
+                                'rgba(153, 102, 255, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(255, 206, 86, 1)', 
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    };
+                } else if (type === 'line') {
+                    return {
+                        labels: ['Quiz 1', 'Quiz 2', 'Quiz 3', 'Quiz 4'],
+                        datasets: [{
+                            label: "Jane's Performance Trend",
+                            data: [85, 92, 78, 88],
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    };
+                }
+            }
+            
+            // Multiple students comparison
+            if (lowerQuery.includes('student') && (lowerQuery.includes('compare') || lowerQuery.includes('average'))) {
+                return {
+                    labels: ['Jane Smith', 'John Doe', 'Mary Johnson', 'Class Average'],
+                    datasets: [{
+                        label: 'Average Quiz Score (%)',
+                        data: [85.75, 78.25, 91.50, 85.17],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                };
+            }
+            
+            // Smart default chart based on query content
+            console.log('📊 Creating smart default chart for:', lowerQuery);
+            
+            // Determine appropriate chart based on query keywords
+            if (lowerQuery.includes('score') || lowerQuery.includes('grade')) {
+                return {
+                    labels: ['Quiz 1', 'Quiz 2', 'Quiz 3', 'Quiz 4'],
+                    datasets: [{
+                        label: 'Test Scores (%)',
+                        data: [78, 85, 92, 88],
+                        backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        fill: type === 'line' ? false : true
+                    }]
+                };
+            } else if (lowerQuery.includes('student')) {
+                return {
+                    labels: ['Student 1001', 'Student 1002', 'Student 1003', 'Student 1004'],
+                    datasets: [{
+                        label: 'Performance Metrics',
+                        data: [85, 78, 92, 88],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                };
+            } else {
+                // Generic fallback with better labels
+                return {
+                    labels: ['Data Point 1', 'Data Point 2', 'Data Point 3', 'Data Point 4'],
+                    datasets: [{
+                        label: title || 'Sample Data',
+                        data: [65, 78, 85, 92],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                };
+            }
+        }
+        
+        // Global variables for connection diagnostics
+        let lastConnectionError = null;
+        let connectionDetails = {
+            lastCheck: null,
+            serverStatus: 'unknown',
+            databaseStatus: 'unknown',
+            apiEndpoints: {}
+        };
+        
+        // Status indicator function
+        function updateConnectionStatus(status, errorDetails = null) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            // Store error details for diagnostics
+            if (errorDetails) {
+                lastConnectionError = errorDetails;
+            }
+            
+            // Remove all status classes
+            statusIndicator.classList.remove('connected', 'warning', 'loading');
+            
+            switch (status) {
+                case 'connecting':
+                    statusIndicator.classList.add('loading');
+                    statusText.textContent = 'Connecting...';
+                    connectionDetails.serverStatus = 'connecting';
+                    break;
+                case 'connected':
+                    statusIndicator.classList.add('connected');
+                    statusText.textContent = 'Connected';
+                    connectionDetails.serverStatus = 'connected';
+                    connectionDetails.lastCheck = new Date().toLocaleString();
+                    break;
+                case 'error':
+                    statusIndicator.classList.add('warning');
+                    statusText.textContent = 'Connection Error';
+                    connectionDetails.serverStatus = 'error';
+                    break;
+                case 'offline':
+                    statusIndicator.classList.remove('connected', 'warning', 'loading');
+                    statusText.textContent = 'Offline';
+                    connectionDetails.serverStatus = 'offline';
+                    break;
+                default:
+                    statusIndicator.classList.remove('connected', 'warning', 'loading');
+                    statusText.textContent = 'Disconnected';
+                    connectionDetails.serverStatus = 'disconnected';
+            }
+        }
+        
+        // Connection diagnostics function
+        async function runConnectionDiagnostics() {
+            const diagnosticResults = {
+                timestamp: new Date().toLocaleString(),
+                tests: []
+            };
+            
+            // Test 1: Server availability
+            try {
+                const serverResponse = await fetch('/api/students', { method: 'GET' });
+                diagnosticResults.tests.push({
+                    name: 'Server Connection',
+                    status: serverResponse.ok ? 'PASS' : 'FAIL',
+                    details: `HTTP ${serverResponse.status} - ${serverResponse.statusText}`,
+                    endpoint: '/api/students'
+                });
+                connectionDetails.apiEndpoints['/api/students'] = serverResponse.ok ? 'working' : 'failed';
+            } catch (error) {
+                diagnosticResults.tests.push({
+                    name: 'Server Connection',
+                    status: 'FAIL',
+                    details: `Network error: ${error.message}`,
+                    endpoint: '/api/students'
+                });
+                connectionDetails.apiEndpoints['/api/students'] = 'failed';
+            }
+            
+            // Test 2: Database connection
+            try {
+                const dbResponse = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: 'SELECT 1 as test' })
+                });
+                diagnosticResults.tests.push({
+                    name: 'Database Connection',
+                    status: dbResponse.ok ? 'PASS' : 'FAIL',
+                    details: `HTTP ${dbResponse.status} - ${dbResponse.statusText}`,
+                    endpoint: '/api/query'
+                });
+                connectionDetails.databaseStatus = dbResponse.ok ? 'connected' : 'failed';
+            } catch (error) {
+                diagnosticResults.tests.push({
+                    name: 'Database Connection',
+                    status: 'FAIL',
+                    details: `Network error: ${error.message}`,
+                    endpoint: '/api/query'
+                });
+                connectionDetails.databaseStatus = 'failed';
+            }
+            
+            // Test 3: AI Service
+            try {
+                const aiResponse = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: 'What is the status of the AI service?' })
+                });
+                diagnosticResults.tests.push({
+                    name: 'AI Service',
+                    status: aiResponse.ok ? 'PASS' : 'FAIL',
+                    details: `HTTP ${aiResponse.status} - ${aiResponse.statusText}`,
+                    endpoint: '/api/query (AI)'
+                });
+            } catch (error) {
+                diagnosticResults.tests.push({
+                    name: 'AI Service',
+                    status: 'FAIL',
+                    details: `Network error: ${error.message}`,
+                    endpoint: '/api/query (AI)'
+                });
+            }
+            
+            return diagnosticResults;
+        }
+        
+        // Show connection diagnostics modal
+        function showConnectionDiagnostics() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto';
+            
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Connection Diagnostics</h3>
+                    <button id="close-diagnostics" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="diagnostic-content" class="space-y-4">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                        <span class="ml-3 text-gray-600">Running diagnostics...</span>
+                    </div>
+                </div>
+            `;
+            
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            // Close modal functionality
+            document.getElementById('close-diagnostics').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            });
+            
+            // Run diagnostics
+            runConnectionDiagnostics().then(results => {
+                const diagnosticContent = document.getElementById('diagnostic-content');
+                
+                let html = `
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-900 mb-2">System Status</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div><strong>Server:</strong> ${connectionDetails.serverStatus}</div>
+                            <div><strong>Database:</strong> ${connectionDetails.databaseStatus}</div>
+                            <div><strong>Last Check:</strong> ${connectionDetails.lastCheck || 'Never'}</div>
+                            <div><strong>Test Time:</strong> ${results.timestamp}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4 class="font-medium text-gray-900 mb-2">Connection Tests</h4>
+                        <div class="space-y-2">
+                `;
+                
+                results.tests.forEach(test => {
+                    const statusColor = test.status === 'PASS' ? 'text-green-600' : 'text-red-600';
+                    const statusIcon = test.status === 'PASS' ? '✅' : '❌';
+                    html += `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <div class="font-medium">${statusIcon} ${test.name}</div>
+                                <div class="text-sm text-gray-600">${test.endpoint}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-medium ${statusColor}">${test.status}</div>
+                                <div class="text-sm text-gray-600">${test.details}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div></div>`;
+                
+                // Show last error if available
+                if (lastConnectionError) {
+                    html += `
+                        <div class="mb-4">
+                            <h4 class="font-medium text-gray-900 mb-2">Last Error Details</h4>
+                            <div class="p-3 bg-red-50 rounded-lg">
+                                <div class="text-sm text-red-800">${lastConnectionError.message || lastConnectionError}</div>
+                                <div class="text-xs text-red-600 mt-1">${lastConnectionError.stack || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="flex justify-end space-x-2 mt-4">
+                        <button id="retry-connection" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                            Retry Connection
+                        </button>
+                    </div>
+                `;
+                
+                diagnosticContent.innerHTML = html;
+                
+                // Add retry functionality
+                document.getElementById('retry-connection').addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                    checkServerConnection();
+                });
+            }).catch(error => {
+                document.getElementById('diagnostic-content').innerHTML = `
+                    <div class="p-4 bg-red-50 rounded-lg">
+                        <div class="text-red-800 font-medium">Diagnostic Error</div>
+                        <div class="text-red-600 text-sm mt-1">${error.message}</div>
+                    </div>
+                `;
+            });
+        }
+        
+        // Improved connection check function
+        async function checkServerConnection() {
+            updateConnectionStatus('connecting');
+            
+            try {
+                const response = await fetch('/api/students', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    updateConnectionStatus('connected');
+                } else {
+                    updateConnectionStatus('error', {
+                        message: `Server responded with ${response.status}: ${response.statusText}`,
+                        endpoint: '/api/students'
+                    });
+                }
+            } catch (error) {
+                console.error('Connection check failed:', error);
+                updateConnectionStatus('offline', {
+                    message: error.message,
+                    type: 'Network Error',
+                    endpoint: '/api/students'
+                });
+            }
+        }
+        
+        // Initialize status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get user role and name from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            userRole = urlParams.get('role') || 'instructor';
+            userName = urlParams.get('user') || 'User';
+            
+            console.log(`👤 User logged in: ${userName} (${userRole})`);
+            
+            // Update welcome message with user info
+            const welcomeMessage = document.getElementById('welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.textContent = `Welcome, ${userName} (${userRole.charAt(0).toUpperCase() + userRole.slice(1)})`;
+            }
+            
+            // Apply role-based access control
+            if (userRole !== 'director') {
+                // Hide all director-only elements
+                document.querySelectorAll('.director-only').forEach(element => {
+                    element.style.display = 'none';
+                });
+                console.log('🔒 Director-only features hidden for non-director user');
+            } else {
+                console.log('🔓 Director access granted - all features available');
+            }
+            
+            // Add click handler for connection status
+            document.getElementById('connection-status-btn').addEventListener('click', showConnectionDiagnostics);
+            
+            // Add logout button functionality
+            document.getElementById('logout-button').addEventListener('click', () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    // Clear any stored session data
+                    sessionStorage.clear();
+                    localStorage.removeItem('authToken');
+                    // Redirect to login page
+                    window.location.href = '/';
+                }
+            });
+            
+            // Initial connection check
+            checkServerConnection();
+        });
+
+    </script>
+</body>
+</html>

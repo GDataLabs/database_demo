@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GABTA Data Portal</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter + Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F2;
+        }
+        
+        /* Sophisticated warm color scheme */
+        :root {
+            --bg-cream: #F8F7F2;
+            --primary-brown: #8B6F47;
+            --secondary-brown: #A0826D;
+            --tertiary-brown: #6D5A47;
+            --light-brown: #D4C4B0;
+            --panel-bg: rgba(255, 255, 255, 0.7);
+            --border-brown: rgba(139, 119, 101, 0.2);
+            --text-dark: #3D3935;
+            --success-green: #2E7D32;
+            --accent-red: #8B4513;
+            --accent-neutral: #8D6E63;
+            --warm-gray: #9E9E9E;
+        }
+        
+        /* Glass morphism effects */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-brown);
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(139, 119, 101, 0.15);
+        }
+        
+        /* Gradient text effects */
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary-brown), var(--secondary-brown));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        /* Add a subtle background pattern */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80"><path fill="%23e5e7eb" fill-opacity="0.4" d="M14 16H9v-2h5V9.87a4 4 0 1 1 2 0V14h5v2h-5v5.13a4 4 0 1 1-2 0V16zM54 16h-5v-2h5V9.87a4 4 0 1 1 2 0V14h5v2h-5v5.13a4 4 0 1 1-2 0V16zM34 36h-5v-2h5V29.87a4 4 0 1 1 2 0V34h5v2h-5v5.13a4 4 0 1 1-2 0V36zM74 36h-5v-2h5V29.87a4 4 0 1 1 2 0V34h5v2h-5v5.13a4 4 0 1 1-2 0V36zM14 56h-5v-2h5V49.87a4 4 0 1 1 2 0V54h5v2h-5v5.13a4 4 0 1 1-2 0V56zM54 56h-5v-2h5V49.87a4 4 0 1 1 2 0V54h5v2h-5v5.13a4 4 0 1 1-2 0V56z"></path></svg>');
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div id="form-container" class="w-full max-w-md glass-panel p-10 space-y-8">
+        
+        <!-- Header with Logos -->
+        <div class="text-center">
+            <!-- Brand Logo Section -->
+            <div class="flex justify-center items-center space-x-6 mb-8">
+                <img src="./logos/gabta_logo.jpg" alt="GABTA Logo" class="h-20 w-auto object-contain rounded-xl shadow-sm" onError="this.style.display='none'; console.log('GABTA logo failed to load');">
+                <div class="h-16 w-px" style="background-color: var(--border-brown);"></div>
+                <img src="./logos/gdata_night_logo.png" alt="G-Data Labs Logo" class="h-14 w-auto object-contain rounded-xl shadow-sm" onError="this.style.display='none'; console.log('G-Data night logo failed to load');">
+            </div>
+            
+            <!-- Title Section -->
+            <div class="space-y-3">
+                <h1 class="text-3xl font-bold gradient-text" style="font-family: 'Poppins', sans-serif;">
+                    GABTA Data Portal
+                </h1>
+                <p class="text-base font-medium" style="color: var(--secondary-brown);">AI-Powered Student Analytics</p>
+                <p class="text-sm" style="color: var(--text-dark);">Sign in to access student data management</p>
+            </div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" action="/login" method="POST" class="space-y-4">
+            <!-- Email Input with Icon -->
+            <div>
+                <label for="email" class="sr-only">Email Address</label>
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                        </svg>
+                    </div>
+                    <input id="email" name="email" type="email" autocomplete="email" required
+                           class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                           placeholder="Email Address">
+                </div>
+            </div>
+
+            <!-- Password Input with Icon -->
+            <div>
+                <label for="password" class="sr-only">Password</label>
+                <div class="relative">
+                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required
+                           class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                           placeholder="Password">
+                </div>
+            </div>
+            
+            <!-- Error Message Display -->
+            <div id="error-message" class="hidden text-sm text-red-600 text-center pt-2">
+                Invalid credentials. Please try again.
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-4">
+                <button type="submit"
+                        class="w-full font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 transform hover:scale-[1.02]" 
+                        style="background: linear-gradient(135deg, var(--primary-brown), var(--secondary-brown)); color: white; focus:ring-color: var(--primary-brown);">
+                    <span class="flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span>Sign In to Portal</span>
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Add a simple shake animation for the error state
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+            .animate-shake {
+                animation: shake 0.5s ease-in-out;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
